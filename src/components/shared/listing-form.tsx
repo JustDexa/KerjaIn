@@ -50,7 +50,11 @@ export function ListingForm({ existing }: { existing?: Listing }) {
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label>Tipe</Label>
-<Select value={type} onValueChange={(value) => setType(value ?? 'jasa')}>            <SelectTrigger><SelectValue /></SelectTrigger>
+<Select value={type} onValueChange={(value) => setType(value ?? 'jasa')}>            <SelectTrigger>
+  <SelectValue>
+    {(value: string | null) => ({ one_time: 'One-time Job', project: 'Project', subscription: 'Subscription', rental: 'Rental' }[value ?? ''] ?? 'Pilih jenis transaksi')}
+  </SelectValue>
+</SelectTrigger>
             <SelectContent>
               <SelectItem value="jasa">Jasa</SelectItem>
               <SelectItem value="barang">Barang</SelectItem>
@@ -61,7 +65,11 @@ export function ListingForm({ existing }: { existing?: Listing }) {
 
         <div className="space-y-2">
           <Label>Jenis Transaksi</Label>
-<Select value={transactionType} onValueChange={(value) => setTransactionType(value ?? 'one_time')}>            <SelectTrigger><SelectValue /></SelectTrigger>
+<Select value={transactionType} onValueChange={(value) => setTransactionType(value ?? 'one_time')}>            <SelectTrigger>
+  <SelectValue>
+    {(value: string | null) => ({ jasa: 'Jasa', barang: 'Barang', custom_request: 'Custom Request' }[value ?? ''] ?? 'Pilih tipe')}
+  </SelectValue>
+</SelectTrigger>
             <SelectContent>
               <SelectItem value="one_time">One-time Job</SelectItem>
               <SelectItem value="project">Project</SelectItem>
