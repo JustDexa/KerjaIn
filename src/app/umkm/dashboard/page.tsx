@@ -37,6 +37,7 @@ export default async function UmkmDashboardPage() {
       <div className="mt-4 flex gap-3">
         <Link href="/profile"><Button variant="outline">Edit Profil</Button></Link>
         <Link href={`/umkm/${user!.id}`}><Button variant="outline">Lihat Profil Publik Saya</Button></Link>
+        <Link href="/transactions"><Button variant="outline">Riwayat Transaksi</Button></Link>
       </div>
 
       <p className="mt-6 text-xs text-muted-foreground">

@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { revalidatePath } from 'next/cache'
 
 export async function createOrGetTransaction(formData: FormData) {
   const supabase = await createClient()
@@ -59,4 +60,46 @@ export async function createOrGetTransaction(formData: FormData) {
   if (error) return { error: error.message }
 
   redirect(`/checkout/${transaction.id}`)
+}
+
+export async function markTransactionComplete(formData: FormData) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const transactionId = formData.get('transactionId') as string
+
+  const { data: transaction } = await supabase
+    .from('transactions')
+    .select('user_id, umkm_id, job_posting_id, payment_status')
+    .eq('id', transactionId)
+    .single()
+
+  if (!transaction) return { error: 'Transaksi tidak ditemukan' }
+
+  // cuma User (pemilik job) atau UMKM yang terlibat yang boleh tandain selesai
+  if (transaction.user_id !== user.id && transaction.umkm_id !== user.id) {
+    return { error: 'Tidak diizinkan' }
+  }
+
+  if (transaction.payment_status === 'pending') {
+    return { error: 'Belum bisa ditandai selesai — pembayaran belum dilakukan' }
+  }
+
+  const { error } = await supabase
+    .from('transactions')
+    .update({ status: 'completed', completed_at: new Date().toISOString() })
+    .eq('id', transactionId)
+
+  if (error) return { error: error.message }
+
+  if (transaction.job_posting_id) {
+    await supabase
+      .from('job_postings')
+      .update({ status: 'completed' })
+      .eq('id', transaction.job_posting_id)
+  }
+
+  revalidatePath(`/transactions/${transactionId}`)
+  return { success: true }
 }

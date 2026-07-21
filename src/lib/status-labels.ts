@@ -27,3 +27,14 @@ export function paymentStatusLabel(status: string) {
   }
   return map[status] ?? status
 }
+
+export function transactionStatusLabel(status: string) {
+  const map: Record<string, string> = {
+    scheduled: 'Terjadwal',
+    in_progress: 'Sedang Berjalan',
+    waiting_payment: 'Menunggu Pembayaran',
+    completed: 'Selesai',
+    cancelled: 'Dibatalkan',
+  }
+  return map[status] ?? status
+}
