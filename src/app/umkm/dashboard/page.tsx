@@ -21,7 +21,7 @@ export default async function UmkmDashboardPage() {
         <form action={signOut}><Button variant="outline" size="sm">Logout</Button></form>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-3 gap-4">
         <Link href="/umkm/trust-score">
           <Card className="hover:bg-muted/50">
             <CardHeader><CardTitle className="text-sm text-muted-foreground">Trust Score</CardTitle></CardHeader>
@@ -34,12 +34,19 @@ export default async function UmkmDashboardPage() {
             <Link href="/umkm/catalog" className="text-sm underline">Kelola Katalog →</Link>
           </CardContent>
         </Card>
+        <Card>
+        <CardHeader><CardTitle className="text-sm text-muted-foreground">Permintaan</CardTitle></CardHeader>
+        <CardContent>
+          <Link href="/umkm/requests" className="text-sm underline">Lihat Permintaan Masuk →</Link>
+        </CardContent>
+      </Card>
       </div>
 
-      <div className="mt-4 flex gap-3">
+      <div className="mt-4 flex flex-wrap gap-3">
         <Link href="/profile"><Button variant="outline">Edit Profil</Button></Link>
         <Link href={`/umkm/${user!.id}`}><Button variant="outline">Lihat Profil Publik Saya</Button></Link>
         <Link href="/transactions"><Button variant="outline">Riwayat Transaksi</Button></Link>
+        <Link href="/umkm/growth"><Button variant="outline">📈 Growth Dashboard</Button></Link>
       </div>
 
       <p className="mt-6 text-xs text-muted-foreground">

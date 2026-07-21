@@ -45,7 +45,7 @@ export function EditProfileForm({ role, userData, umkmData }: Props) {
         <h2 className="text-lg font-semibold">Data Dasar</h2>
         <div className="space-y-2">
           <Label htmlFor="fullName">Nama Lengkap</Label>
-          <Input id="fullName" name="fullName" defaultValue={userData.full_name ?? ''} required />
+          <Input key={userData.full_name} id="fullName" name="fullName" defaultValue={userData.full_name ?? ''} required />
         </div>
         <div className="space-y-2">
           <Label htmlFor="phone">No. HP</Label>
