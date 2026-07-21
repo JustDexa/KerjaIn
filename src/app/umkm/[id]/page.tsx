@@ -26,6 +26,12 @@ export default async function UmkmPublicProfilePage({ params }: { params: Promis
     .eq('umkm_id', id)
     .eq('status', 'active')
 
+  const { data: portfolioEntries } = await supabase
+    .from('portfolio_entries')
+    .select('*')
+    .eq('umkm_id', id)
+    .order('date', { ascending: false })
+
   return (
     <div className="mx-auto max-w-2xl p-6">
       <div className="mb-6">
@@ -75,7 +81,24 @@ export default async function UmkmPublicProfilePage({ params }: { params: Promis
       </div>
 
       <h2 className="mb-3 mt-6 text-lg font-semibold">Portofolio</h2>
-      <p className="text-sm text-muted-foreground">Belum ada entri portofolio (otomatis muncul setelah transaksi pertama selesai — Fase 6).</p>
+      <div className="space-y-3">
+        {(!portfolioEntries || portfolioEntries.length === 0) && (
+          <p className="text-sm text-muted-foreground">Belum ada entri portofolio.</p>
+        )}
+        {portfolioEntries?.map((entry) => (
+          <Card key={entry.id}>
+            <CardContent className="pt-4">
+              <div className="flex items-center justify-between">
+                {entry.category && <Badge variant="secondary">{entry.category}</Badge>}
+                <span className="text-xs text-muted-foreground">
+                  {new Date(entry.date).toLocaleDateString('id-ID')}
+                </span>
+              </div>
+              <p className="mt-2 text-sm">{entry.comment}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   )
 }

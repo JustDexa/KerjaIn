@@ -22,10 +22,12 @@ export default async function UmkmDashboardPage() {
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <Card>
-          <CardHeader><CardTitle className="text-sm text-muted-foreground">Trust Score</CardTitle></CardHeader>
-          <CardContent><p className="text-2xl font-bold">{profile?.trust_score ?? 0}/100</p></CardContent>
-        </Card>
+        <Link href="/umkm/trust-score">
+          <Card className="hover:bg-muted/50">
+            <CardHeader><CardTitle className="text-sm text-muted-foreground">Trust Score</CardTitle></CardHeader>
+            <CardContent><p className="text-2xl font-bold">{profile?.trust_score ?? 0}/100</p></CardContent>
+          </Card>
+        </Link>
         <Card>
           <CardHeader><CardTitle className="text-sm text-muted-foreground">Katalog</CardTitle></CardHeader>
           <CardContent>

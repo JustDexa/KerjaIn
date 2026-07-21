@@ -39,14 +39,17 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  if (user && (path.startsWith('/umkm') || path.startsWith('/admin'))) {
+  const umkmPrivatePaths = ['/umkm/dashboard', '/umkm/catalog', '/umkm/requests', '/umkm/trust-score']
+  const isUmkmPrivatePath = umkmPrivatePaths.some((p) => path.startsWith(p))
+
+  if (user && (isUmkmPrivatePath || path.startsWith('/admin'))) {
     const { data: profile } = await supabase
       .from('users')
       .select('role')
       .eq('id', user.id)
       .single()
 
-    if (path.startsWith('/umkm') && profile?.role !== 'umkm') {
+    if (isUmkmPrivatePath && profile?.role !== 'umkm') {
       const url = request.nextUrl.clone()
       url.pathname = '/home'
       return NextResponse.redirect(url)
