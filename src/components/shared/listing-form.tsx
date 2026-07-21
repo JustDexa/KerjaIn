@@ -83,7 +83,7 @@ export function ListingForm({ existing }: { existing?: Listing }) {
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="price">Harga (Rp)</Label>
-          <Input id="price" name="price" type="number" defaultValue={existing?.price ?? ''} />
+          <Input id="price" name="price" type="number" min="0" defaultValue={existing?.price ?? ''} />
         </div>
         <div className="space-y-2">
           <Label htmlFor="priceUnit">Satuan Harga</Label>

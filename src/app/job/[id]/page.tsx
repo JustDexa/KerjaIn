@@ -6,6 +6,8 @@ import { jobStatusLabel, applicationStatusLabel } from '@/lib/status-labels'
 import { ApplicationList } from '@/components/shared/application-list'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
+import { createOrGetTransaction } from '@/lib/actions/transactions'
+import { acceptApplication } from '@/lib/actions/jobs'
 
 export default async function JobDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -77,10 +79,22 @@ let applications: Application[] = []
       <p className="mt-1 text-xs text-muted-foreground">Diposting oleh {job.users?.full_name}</p>
 
       {conversation && (job.status === 'deal' || job.status === 'completed') && (
-        <div className="mt-4">
+        <div className="mt-4 flex gap-2">
           <Link href={`/chat/${conversation.id}`}>
             <Button size="sm">💬 Buka Chat</Button>
           </Link>
+          {isOwner && job.status === 'deal' && (
+            <form action={async (formData) => {
+              'use server'
+              const result = await createOrGetTransaction(formData)
+              if (result?.error) {
+                console.error('[checkout error]', result.error)
+              }
+            }}>
+              <input type="hidden" name="jobPostingId" value={job.id} />
+              <Button type="submit" size="sm" variant="secondary">Checkout & Bayar</Button>
+            </form>
+          )}
         </div>
       )}
 

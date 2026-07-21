@@ -38,13 +38,13 @@ export function ApplicationList({
 
             {jobStatus === 'has_candidates' && app.status === 'pending' && (
               <div className="mt-3 flex gap-2">
-                <form action={async (formData) => { await acceptApplication(formData) }}>
+                <form action={async (formData: FormData) => { await acceptApplication(formData) }}>
                   <input type="hidden" name="applicationId" value={app.id} />
                   <input type="hidden" name="jobPostingId" value={jobPostingId} />
                   <input type="hidden" name="umkmId" value={app.umkm_id} />
                   <Button type="submit" size="sm">Terima</Button>
                 </form>
-                <form action={rejectApplication}>
+                <form action={async (formData: FormData) => { await rejectApplication(formData) }}>
                   <input type="hidden" name="applicationId" value={app.id} />
                   <input type="hidden" name="jobPostingId" value={jobPostingId} />
                   <Button type="submit" size="sm" variant="outline">Tolak</Button>

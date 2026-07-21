@@ -29,13 +29,18 @@ export function ChatRoom({
 
   useEffect(() => {
     const supabase = createClient()
-    let channel: ReturnType<typeof supabase.channel>
+    let channel: ReturnType<typeof supabase.channel> | null = null
+    let isCancelled = false
 
     async function setupRealtime() {
       const { data: { session } } = await supabase.auth.getSession()
+      if (isCancelled) return
+
       if (session?.access_token) {
         supabase.realtime.setAuth(session.access_token)
       }
+
+      if (isCancelled) return
 
       channel = supabase
         .channel(`conversation-${conversationId}`)
@@ -53,14 +58,13 @@ export function ChatRoom({
             setMessages((prev) => [...prev, newMsg])
           }
         )
-        .subscribe((status, err) => {
-          console.log('[realtime] status channel:', status, err ?? '')
-        })
+        .subscribe()
     }
 
     setupRealtime()
 
     return () => {
+      isCancelled = true
       if (channel) supabase.removeChannel(channel)
     }
   }, [conversationId, currentUserId])

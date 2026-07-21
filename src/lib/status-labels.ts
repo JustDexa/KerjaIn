@@ -17,3 +17,13 @@ export function applicationStatusLabel(status: string) {
   }
   return map[status] ?? status
 }
+
+export function paymentStatusLabel(status: string) {
+  const map: Record<string, string> = {
+    pending: 'Belum Bayar',
+    dp_paid: 'DP Terbayar',
+    paid: 'Lunas',
+    refunded: 'Direfund',
+  }
+  return map[status] ?? status
+}

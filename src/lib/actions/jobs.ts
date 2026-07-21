@@ -9,13 +9,20 @@ export async function createJobPosting(formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
+  const budgetMin = Number(formData.get('budgetMin')) || null
+  const budgetMax = Number(formData.get('budgetMax')) || null
+    
+  if ((budgetMin && budgetMin < 0) || (budgetMax && budgetMax < 0)) {
+    return { error: 'Budget gak boleh negatif' }
+  }
+
   const { data, error } = await supabase.from('job_postings').insert({
     user_id: user.id,
     category_id: formData.get('categoryId') as string,
     description: formData.get('description') as string,
     location: formData.get('location') as string,
-    budget_min: Number(formData.get('budgetMin')) || null,
-    budget_max: Number(formData.get('budgetMax')) || null,
+    budget_min: budgetMin,
+    budget_max: budgetMax,
     is_urgent: formData.get('isUrgent') === 'on',
     source: 'manual',
   }).select('id').single()

@@ -15,7 +15,7 @@ export async function createListing(formData: FormData) {
     transaction_type: formData.get('transactionType') as string,
     title: formData.get('title') as string,
     description: formData.get('description') as string,
-    price: Number(formData.get('price')) || null,
+    price: Math.max(0, Number(formData.get('price')) || 0) || null,
     price_unit: formData.get('priceUnit') as string,
     estimated_duration: formData.get('estimatedDuration') as string,
   })
@@ -39,7 +39,7 @@ export async function updateListing(formData: FormData) {
       transaction_type: formData.get('transactionType') as string,
       title: formData.get('title') as string,
       description: formData.get('description') as string,
-      price: Number(formData.get('price')) || null,
+      price: Math.max(0, Number(formData.get('price')) || 0) || null,
       price_unit: formData.get('priceUnit') as string,
       estimated_duration: formData.get('estimatedDuration') as string,
     })

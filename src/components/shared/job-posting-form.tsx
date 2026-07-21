@@ -60,11 +60,11 @@ export function JobPostingForm({ categories }: { categories: Category[] }) {
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="budgetMin">Budget Minimal (Rp)</Label>
-          <Input id="budgetMin" name="budgetMin" type="number" />
+          <Input id="budgetMin" name="budgetMin" type="number" min="0" />
         </div>
         <div className="space-y-2">
           <Label htmlFor="budgetMax">Budget Maksimal (Rp)</Label>
-          <Input id="budgetMax" name="budgetMax" type="number" />
+          <Input id="budgetMax" name="budgetMax" type="number" min="0" />
         </div>
       </div>
 
