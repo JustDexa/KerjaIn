@@ -32,6 +32,45 @@ export async function createJobPosting(formData: FormData) {
   redirect(`/job/${data.id}`)
 }
 
+export async function createJobPostingFromAi(formData: FormData) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const description = formData.get('description') as string
+  const location = formData.get('location') as string
+  const categoryName = formData.get('categoryName') as string
+  const budgetMin = Number(formData.get('budgetMin')) || null
+  const budgetMax = Number(formData.get('budgetMax')) || null
+  const isUrgent = formData.get('isUrgent') === 'true'
+
+  let categoryId: string | null = null
+  if (categoryName) {
+    const { data: category } = await supabase
+      .from('categories')
+      .select('id')
+      .ilike('name', `%${categoryName}%`)
+      .maybeSingle()
+    categoryId = category?.id ?? null
+  }
+
+  const { data, error } = await supabase.from('job_postings').insert({
+    user_id: user.id,
+    category_id: categoryId,
+    description,
+    location,
+    budget_min: budgetMin,
+    budget_max: budgetMax,
+    is_urgent: isUrgent,
+    source: 'ai_chatbot',
+    ai_extracted_data: { category: categoryName, description, location, budget_min: budgetMin, budget_max: budgetMax, is_urgent: isUrgent },
+  }).select('id').single()
+
+  if (error) return { error: error.message }
+
+  redirect(`/job/${data.id}`)
+}
+
 export async function applyToJob(formData: FormData) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

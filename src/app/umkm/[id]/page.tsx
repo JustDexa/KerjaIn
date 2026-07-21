@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { notFound } from 'next/navigation'
+import { StartChatButton } from '@/components/shared/start-chat-button'
 
 export default async function UmkmPublicProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -12,6 +13,14 @@ export default async function UmkmPublicProfilePage({ params }: { params: Promis
     .select('*, users(full_name)')
     .eq('user_id', id)
     .single()
+
+    const { data: { user: currentUser } } = await supabase.auth.getUser()
+    let currentUserRole: string | null = null
+    if (currentUser) {
+      const { data: currentUserData } = await supabase.from('users').select('role').eq('id', currentUser.id).single()
+      currentUserRole = currentUserData?.role ?? null
+    }
+    const isOwnProfile = currentUser?.id === id
 
   if (!profile) notFound()
 
@@ -43,6 +52,12 @@ export default async function UmkmPublicProfilePage({ params }: { params: Promis
         ))}
         </div>
       </div>
+
+      {currentUserRole === 'user' && !isOwnProfile && (
+        <div className="mb-4">
+          <StartChatButton umkmId={id} />
+        </div>
+      )}
 
       <Card className="mb-6">
         <CardContent className="pt-6">
