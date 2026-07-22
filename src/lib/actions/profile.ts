@@ -10,10 +10,14 @@ export async function updateUserProfile(formData: FormData) {
 
   const fullName = formData.get('fullName') as string
   const phone = formData.get('phone') as string
+  const avatarUrl = formData.get('avatarUrl') as string | null
+
+  const updateData: Record<string, string | null> = { full_name: fullName, phone }
+  if (avatarUrl) updateData.avatar_url = avatarUrl
 
   const { error } = await supabase
     .from('users')
-    .update({ full_name: fullName, phone })
+    .update(updateData)
     .eq('id', user.id)
 
   if (error) return { error: error.message }

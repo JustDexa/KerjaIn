@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { updateUserProfile, updateUmkmProfile } from '@/lib/actions/profile'
+import { uploadFiles } from '@/lib/supabase/upload'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -10,10 +11,13 @@ import { Separator } from '@/components/ui/separator'
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
+import { createClient } from '@/lib/supabase/client'
+
 
 type Props = {
   role: string
-  userData: { full_name: string | null; phone: string | null }
+  userId: string
+  userData: { full_name: string | null; phone: string | null; avatar_url?: string | null }
   umkmData?: {
     business_name: string | null
     description: string | null
@@ -24,14 +28,49 @@ type Props = {
   } | null
 }
 
-export function EditProfileForm({ role, userData, umkmData }: Props) {
+export function EditProfileForm({ role, userId, userData, umkmData }: Props) {
   const [msg, setMsg] = useState('')
   const [offeringType, setOfferingType] = useState(umkmData?.offering_type ?? 'jasa')
+  const [avatarFile, setAvatarFile] = useState<File | null>(null)
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(userData.avatar_url ?? null)
+  const [uploading, setUploading] = useState(false)
 
-  async function handleUserSubmit(formData: FormData) {
-    const result = await updateUserProfile(formData)
-    setMsg(result?.error ? `Error: ${result.error}` : 'Profil dasar tersimpan ✔')
+  function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setAvatarFile(file)
+    setAvatarPreview(URL.createObjectURL(file))
   }
+
+async function handleUserSubmit(formData: FormData) {
+  setUploading(true)
+
+  if (avatarFile) {
+    const supabase = createClient()
+
+    const { urls, error } = await uploadFiles(
+      supabase,
+      [avatarFile],
+      'public-photos',
+      `profiles/${userId}`
+    )
+
+    if (error) {
+      setUploading(false)
+      setMsg(`Error upload: ${error}`)
+      return
+    }
+
+    if (urls.length > 0) {
+      formData.set('avatarUrl', urls[0])
+    }
+  }
+
+  const result = await updateUserProfile(formData)
+
+  setUploading(false)
+  setMsg(result?.error ? `Error: ${result.error}` : 'Profil dasar tersimpan ✔')
+}
 
   async function handleUmkmSubmit(formData: FormData) {
     formData.set('offeringType', offeringType)
@@ -44,14 +83,28 @@ export function EditProfileForm({ role, userData, umkmData }: Props) {
       <form action={handleUserSubmit} className="space-y-4">
         <h2 className="text-lg font-semibold">Data Dasar</h2>
         <div className="space-y-2">
+          <Label htmlFor="avatar">Foto Profil</Label>
+          <div className="flex items-center gap-3">
+            {avatarPreview ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={avatarPreview} alt="Preview" className="size-14 rounded-full object-cover" />
+            ) : (
+              <div className="flex size-14 items-center justify-center rounded-full bg-muted text-xs text-muted-foreground">
+                Foto
+              </div>
+            )}
+            <Input id="avatar" type="file" accept="image/jpeg,image/png,image/webp" onChange={handleAvatarChange} className="max-w-64" />
+          </div>
+        </div>
+        <div className="space-y-2">
           <Label htmlFor="fullName">Nama Lengkap</Label>
           <Input key={userData.full_name} id="fullName" name="fullName" defaultValue={userData.full_name ?? ''} required />
         </div>
         <div className="space-y-2">
           <Label htmlFor="phone">No. HP</Label>
-          <Input id="phone" name="phone" defaultValue={userData.phone ?? ''} />
+          <Input key={userData.phone ?? 'phone'} id="phone" name="phone" defaultValue={userData.phone ?? ''} />
         </div>
-        <Button type="submit">Simpan Data Dasar</Button>
+        <Button type="submit" disabled={uploading}>{uploading ? 'Mengunggah...' : 'Simpan Data Dasar'}</Button>
       </form>
 
       {role === 'umkm' && (
@@ -73,7 +126,13 @@ export function EditProfileForm({ role, userData, umkmData }: Props) {
             </div>
             <div className="space-y-2">
               <Label>Jenis Penawaran</Label>
-                  <Select key={umkmData?.offering_type} value={offeringType} onValueChange={(value) => setOfferingType(value ?? 'jasa')}>                <SelectContent>
+                  <Select key={umkmData?.offering_type} value={offeringType} onValueChange={(value) => setOfferingType(value ?? 'jasa')}>
+                <SelectTrigger>
+                  <SelectValue>
+                    {(value: string | null) => ({ jasa: 'Jasa', barang: 'Barang', keduanya: 'Keduanya' }[value ?? ''] ?? 'Pilih jenis penawaran')}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
                   <SelectItem value="jasa">Jasa</SelectItem>
                   <SelectItem value="barang">Barang</SelectItem>
                   <SelectItem value="keduanya">Keduanya</SelectItem>

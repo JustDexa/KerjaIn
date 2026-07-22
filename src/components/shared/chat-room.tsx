@@ -1,10 +1,16 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { sendMessage } from '@/lib/actions/chat'
+import { createOrGetTransaction, createTransactionFromListing } from '@/lib/actions/transactions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select'
+import { Handshake, CreditCard } from 'lucide-react'
 
 type Message = {
   id: string
@@ -14,17 +20,32 @@ type Message = {
   created_at: string
 }
 
+type Listing = { id: string; title: string; price: number | null; price_unit: string | null }
+
 export function ChatRoom({
   conversationId,
   currentUserId,
+  currentUserRole,
   initialMessages,
+  jobPostingId,
+  jobStatus,
+  existingTransactionId,
+  listings,
 }: {
   conversationId: string
   currentUserId: string
+  currentUserRole: 'user' | 'umkm' | 'admin'
   initialMessages: Message[]
+  jobPostingId: string | null
+  jobStatus: string | null
+  existingTransactionId: string | null
+  listings: Listing[]
 }) {
   const [messages, setMessages] = useState<Message[]>(initialMessages)
   const [text, setText] = useState('')
+  const [dealError, setDealError] = useState('')
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const [selectedListingId, setSelectedListingId] = useState('')
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -92,8 +113,73 @@ export function ChatRoom({
     await sendMessage(formData)
   }
 
+  async function handleGoToJobPayment() {
+    if (!jobPostingId) return
+    const formData = new FormData()
+    formData.set('jobPostingId', jobPostingId)
+    const result = await createOrGetTransaction(formData)
+    if (result?.error) setDealError(result.error)
+  }
+
+  async function handleConfirmDeal() {
+    if (!selectedListingId) {
+      setDealError('Pilih layanan dulu')
+      return
+    }
+    const formData = new FormData()
+    formData.set('conversationId', conversationId)
+    formData.set('listingId', selectedListingId)
+    const result = await createTransactionFromListing(formData)
+    if (result?.error) setDealError(result.error)
+  }
+
+  const showExistingPayment = currentUserRole === 'user' && !!existingTransactionId
+  const showJobPayment = currentUserRole === 'user' && !existingTransactionId && !!jobPostingId && jobStatus === 'deal'
+  const showDirectDeal = currentUserRole === 'user' && !existingTransactionId && !showJobPayment && listings.length > 0
+  const showQuickActions = showExistingPayment || showJobPayment || showDirectDeal
+
   return (
     <div className="flex h-[70vh] flex-col">
+      {showQuickActions && (
+        <div className="mb-3 space-y-2 rounded-md border bg-muted/30 p-3">
+          <div className="flex flex-wrap items-center gap-2">
+            {showExistingPayment ? (
+              <Link href={`/checkout/${existingTransactionId}`}>
+                <Button size="sm"><CreditCard className="mr-1.5 size-4" />Lanjut ke Pembayaran</Button>
+              </Link>
+            ) : showJobPayment ? (
+              <Button size="sm" onClick={handleGoToJobPayment}>
+                <CreditCard className="mr-1.5 size-4" />Lanjut ke Pembayaran
+              </Button>
+            ) : showDirectDeal && !pickerOpen ? (
+              <Button size="sm" variant="outline" onClick={() => setPickerOpen(true)}>
+                <Handshake className="mr-1.5 size-4" />Tandai Deal
+              </Button>
+            ) : showDirectDeal && pickerOpen ? (
+              <div className="flex w-full flex-wrap items-center gap-2">
+                <Select value={selectedListingId || null} onValueChange={(v) => setSelectedListingId(v ?? '')}>
+                  <SelectTrigger className="w-56">
+                    <SelectValue placeholder="Pilih layanan">
+                      {(value: string | null) => listings.find((l) => l.id === value)?.title ?? 'Pilih layanan'}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {listings.map((l) => (
+                      <SelectItem key={l.id} value={l.id}>
+                        {l.title}{l.price ? ` — Rp${Number(l.price).toLocaleString('id-ID')}` : ''}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button size="sm" onClick={handleConfirmDeal}>Konfirmasi Deal</Button>
+                <Button size="sm" variant="ghost" onClick={() => setPickerOpen(false)}>Batal</Button>
+              </div>
+            ) : null}
+          </div>
+          {dealError && <p className="text-xs text-destructive">{dealError}</p>}
+        </div>
+      )}
+
       <div className="flex-1 space-y-2 overflow-y-auto rounded-md border p-4">
         {messages.length === 0 && (
           <p className="text-center text-sm text-muted-foreground">Belum ada pesan. Mulai obrolan!</p>

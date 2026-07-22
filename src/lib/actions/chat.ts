@@ -34,13 +34,11 @@ export async function startDirectConversation(formData: FormData) {
   const umkmId = formData.get('umkmId') as string
 
   const { data: existing } = await supabase
-    .from('conversations')
-    .select('id')
-    .eq('user_id', user.id)
-    .eq('umkm_id', umkmId)
-    .is('job_posting_id', null)
-    .is('listing_id', null)
-    .maybeSingle()
+      .from('conversations')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('umkm_id', umkmId)
+      .maybeSingle()
 
   if (existing) redirect(`/chat/${existing.id}`)
 

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { createJobPostingFromAi } from '@/lib/actions/jobs'
 import { Button } from '@/components/ui/button'
+import { FileText } from 'lucide-react'
 
 type Requirement = {
   category: string | null
@@ -37,7 +38,7 @@ export function CreatePostingFromAiButton({ requirement }: { requirement: Requir
   return (
     <div>
       <Button onClick={handleClick} disabled={loading}>
-        {loading ? 'Membuat...' : '📝 Buat Posting dari Kebutuhan Ini'}
+        {loading ? 'Membuat...' : (<><FileText className="mr-2 h-4 w-4" />Buat Posting dari Kebutuhan Ini</>)}
       </Button>
       {error && <p className="mt-2 text-sm text-red-500">{error}</p>}
     </div>

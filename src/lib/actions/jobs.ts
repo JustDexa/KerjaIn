@@ -124,15 +124,43 @@ export async function acceptApplication(formData: FormData) {
     .eq('job_posting_id', jobPostingId)
     .neq('id', applicationId)
 
-  await supabase.from('job_postings').update({ status: 'deal' }).eq('id', jobPostingId)
-
-  const { data: conversation, error } = await supabase
-    .from('conversations')
-    .insert({ job_posting_id: jobPostingId, user_id: user.id, umkm_id: umkmId })
-    .select('id')
+  const { data: jobData } = await supabase
+    .from('job_postings')
+    .select('description')
+    .eq('id', jobPostingId)
     .single()
 
-  if (error) return { error: error.message }
+  await supabase.from('job_postings').update({ status: 'deal' }).eq('id', jobPostingId)
+
+  // cari conversation yang udah ada buat pasangan User-UMKM ini (biar gak dobel)
+  const { data: existingConv } = await supabase
+    .from('conversations')
+    .select('id')
+    .eq('user_id', user.id)
+    .eq('umkm_id', umkmId)
+    .maybeSingle()
+
+  let conversationId: string
+
+  if (existingConv) {
+    conversationId = existingConv.id
+    await supabase.from('conversations').update({ job_posting_id: jobPostingId }).eq('id', conversationId)
+  } else {
+    const { data: newConv, error } = await supabase
+      .from('conversations')
+      .insert({ job_posting_id: jobPostingId, user_id: user.id, umkm_id: umkmId })
+      .select('id')
+      .single()
+
+    if (error) return { error: error.message }
+    conversationId = newConv.id
+  }
+
+  await supabase.from('messages').insert({
+    conversation_id: conversationId,
+    sender_id: user.id,
+    content: `Deal untuk pekerjaan: "${jobData?.description ?? 'pekerjaan ini'}"`,
+  })
 
   redirect(`/job/${jobPostingId}`)
 }

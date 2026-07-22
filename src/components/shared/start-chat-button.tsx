@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { startDirectConversation } from '@/lib/actions/chat'
 import { Button } from '@/components/ui/button'
+import { MessageCircle } from 'lucide-react'
 
 
 export function StartChatButton({ umkmId }: { umkmId: string }) {
@@ -17,7 +18,7 @@ export function StartChatButton({ umkmId }: { umkmId: string }) {
 
   return (
     <div>
-      <Button onClick={handleClick}>💬 Mulai Chat</Button>
+      <Button onClick={handleClick}><MessageCircle className="mr-2 h-4 w-4" />Mulai Chat</Button>
       {error && <p className="mt-2 text-sm text-red-500">{error}</p>}
     </div>
   )

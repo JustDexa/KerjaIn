@@ -103,3 +103,72 @@ export async function markTransactionComplete(formData: FormData) {
   revalidatePath(`/transactions/${transactionId}`)
   return { success: true }
 }
+
+export async function createTransactionFromListing(formData: FormData) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const conversationId = formData.get('conversationId') as string
+  const listingId = formData.get('listingId') as string
+
+  const { data: conversation } = await supabase
+    .from('conversations')
+    .select('user_id, umkm_id')
+    .eq('id', conversationId)
+    .single()
+
+  if (!conversation || conversation.user_id !== user.id) {
+    return { error: 'Tidak diizinkan' }
+  }
+
+  const { data: existing } = await supabase
+      .from('transactions')
+      .select('id')
+      .eq('conversation_id', conversationId)
+      .eq('payment_status', 'pending')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (existing) redirect(`/checkout/${existing.id}`)
+
+  const { data: listing } = await supabase
+    .from('listings')
+    .select('id, umkm_id, price, transaction_type')
+    .eq('id', listingId)
+    .single()
+
+  if (!listing || listing.umkm_id !== conversation.umkm_id) {
+    return { error: 'Layanan tidak valid' }
+  }
+
+  const { data: listingDetail } = await supabase
+    .from('listings')
+    .select('title')
+    .eq('id', listingId)
+    .single()
+
+  const { data: transaction, error } = await supabase
+    .from('transactions')
+    .insert({
+      conversation_id: conversationId,
+      listing_id: listingId,
+      user_id: user.id,
+      umkm_id: conversation.umkm_id,
+      transaction_type: listing.transaction_type,
+      total_amount: listing.price,
+    })
+    .select('id')
+    .single()
+
+  if (error) return { error: error.message }
+
+  await supabase.from('messages').insert({
+    conversation_id: conversationId,
+    sender_id: user.id,
+    content: `Memesan: "${listingDetail?.title ?? 'layanan ini'}"${listing.price ? ` — Rp${Number(listing.price).toLocaleString('id-ID')}` : ''}`,
+  })
+
+  redirect(`/checkout/${transaction.id}`)
+}

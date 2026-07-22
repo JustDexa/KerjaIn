@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { saveExtractedRequirement } from '@/lib/actions/ai'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Search } from 'lucide-react'
 
 type ChatMessage = { role: 'user' | 'assistant'; content: string }
 
@@ -93,7 +94,7 @@ export function AiChatWidget() {
             )}
           </ul>
           <Button onClick={handleFindRecommendations} disabled={saving} className="w-full">
-            {saving ? 'Mencari...' : '🔍 Cari Rekomendasi UMKM'}
+            {saving ? 'Mencari...' : (<><Search className="mr-2 h-4 w-4" />Cari Rekomendasi UMKM</>)}
           </Button>
         </div>
       )}

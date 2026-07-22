@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { markTransactionComplete } from '@/lib/actions/transactions'
 import { Button } from '@/components/ui/button'
+import { CheckCircle2 } from 'lucide-react'
 
 export function MarkCompleteButton({ transactionId }: { transactionId: string }) {
   const [error, setError] = useState('')
@@ -21,7 +22,7 @@ export function MarkCompleteButton({ transactionId }: { transactionId: string })
   return (
     <div>
       <Button onClick={handleClick} disabled={loading}>
-        {loading ? 'Memproses...' : '✔ Tandai Selesai'}
+        {loading ? 'Memproses...' : (<><CheckCircle2 className="mr-2 h-4 w-4" />Tandai Selesai</>)}
       </Button>
       {error && <p className="mt-2 text-sm text-red-500">{error}</p>}
     </div>
