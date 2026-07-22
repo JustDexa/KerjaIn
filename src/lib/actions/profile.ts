@@ -38,16 +38,21 @@ export async function updateUmkmProfile(formData: FormData) {
   const basePriceRange = formData.get('basePriceRange') as string
   const operationalHours = formData.get('operationalHours') as string
 
+  const bannerUrl = formData.get('bannerUrl') as string
+
+  const updateData: Record<string, unknown> = {
+    business_name: businessName,
+    description,
+    service_area: serviceArea,
+    offering_type: offeringType,
+    base_price_range: basePriceRange,
+    operational_hours: operationalHours,
+  }
+  if (bannerUrl) updateData.banner_url = bannerUrl
+
   const { error } = await supabase
     .from('umkm_profiles')
-    .update({
-      business_name: businessName,
-      description,
-      service_area: serviceArea,
-      offering_type: offeringType,
-      base_price_range: basePriceRange,
-      operational_hours: operationalHours,
-    })
+    .update(updateData)
     .eq('user_id', user.id)
 
   if (error) return { error: error.message }

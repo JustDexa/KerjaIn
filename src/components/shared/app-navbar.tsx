@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { Menu, Bell, MessageSquareText, Search as SearchIcon, ChevronDown, User, LogOut } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
 import { signOut } from '@/lib/actions/auth'
 
 export function AppNavbar({
@@ -49,17 +49,14 @@ export function AppNavbar({
         </form>
 
         <div className="ml-auto flex items-center gap-1">
-          <div className="relative">
-            <Button variant="ghost" size="icon">
-              <Bell className="size-4.5" />
-            </Button>
+          <Link href="/notifications" className={buttonVariants({ variant: 'ghost', size: 'icon' }) + ' relative'}>
+            <Bell className="size-4.5" />
             {unreadCount > 0 && (
               <span className="absolute right-1 top-1 flex size-4 items-center justify-center rounded-full bg-destructive text-[10px] font-medium text-white">
                 {unreadCount > 9 ? '9+' : unreadCount}
               </span>
             )}
-          </div>
-
+          </Link>
           <Link href="/chat">
             <Button variant="ghost" size="icon">
               <MessageSquareText className="size-4.5" />

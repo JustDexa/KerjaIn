@@ -27,7 +27,7 @@ function validateFiles(files: File[]): string | null {
 }
 
 export async function uploadFiles(
-  supabase: SupabaseClient, 
+  supabase: SupabaseClient,
   files: File[],
   bucket: 'public-photos' | 'verification-docs',
   pathPrefix: string

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { addListing } from '@/lib/actions/listings'
+import { createListing } from '@/lib/actions/listings'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -23,7 +23,7 @@ export function AddListingForm() {
     setLoading(true)
     setMsg('')
     
-    const result = await addListing(formData)
+    const result = await createListing(formData)
     
     if (result?.error) {
       setMsg(result.error)

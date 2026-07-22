@@ -29,6 +29,10 @@ export default async function CatalogPage() {
       <div className="space-y-4">
         {listings?.map((l) => (
           <Card key={l.id}>
+            {l.photos?.[0] && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={l.photos[0]} alt={l.title} className="h-40 w-full rounded-t-lg object-cover" />
+            )}
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-base">{l.title}</CardTitle>
               <div className="flex gap-2">

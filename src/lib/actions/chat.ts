@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { createNotification } from '../notifications'
 
 export async function sendMessage(formData: FormData) {
   const supabase = await createClient()
@@ -21,6 +22,25 @@ export async function sendMessage(formData: FormData) {
   })
 
   if (error) return { error: error.message }
+
+  const { data: conversation } = await supabase
+    .from('conversations')
+    .select('user_id, umkm_id')
+    .eq('id', conversationId)
+    .single()
+
+  if (conversation) {
+    const recipientId = conversation.user_id === user.id ? conversation.umkm_id : conversation.user_id
+    const { data: senderData } = await supabase.from('users').select('full_name').eq('id', user.id).single()
+
+    await createNotification(supabase, {
+      userId: recipientId,
+      type: 'new_message',
+      title: 'Pesan baru',
+      body: `${senderData?.full_name ?? 'Seseorang'}: ${content.trim().slice(0, 50)}`,
+      link: `/chat/${conversationId}`,
+    })
+  }
 
   revalidatePath(`/chat/${conversationId}`)
   return { success: true }

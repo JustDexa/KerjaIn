@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
+import { createNotification } from '../notifications'
 
 export async function createJobPosting(formData: FormData) {
   const supabase = await createClient()
@@ -93,6 +94,19 @@ export async function applyToJob(formData: FormData) {
     .eq('id', jobPostingId)
     .eq('status', 'open')
 
+  const { data: job } = await supabase.from('job_postings').select('user_id, description').eq('id', jobPostingId).single()
+  const { data: umkmProfile } = await supabase.from('umkm_profiles').select('business_name').eq('user_id', user.id).single()
+
+  if (job) {
+    await createNotification(supabase, {
+      userId: job.user_id,
+      type: 'job_application',
+      title: 'Ada yang melamar pekerjaan kamu',
+      body: `${umkmProfile?.business_name ?? 'UMKM'} melamar: ${job.description.slice(0, 50)}`,
+      link: `/job/${jobPostingId}`,
+    })
+  }
+
   revalidatePath(`/job/${jobPostingId}`)
   return { success: true }
 }
@@ -162,6 +176,14 @@ export async function acceptApplication(formData: FormData) {
     content: `Deal untuk pekerjaan: "${jobData?.description ?? 'pekerjaan ini'}"`,
   })
 
+  await createNotification(supabase, {
+    userId: umkmId,
+    type: 'application_accepted',
+    title: 'Lamaran kamu diterima!',
+    body: `Deal untuk: ${jobData?.description ?? 'pekerjaan ini'}`,
+    link: `/job/${jobPostingId}`,
+  })
+
   redirect(`/job/${jobPostingId}`)
 }
 
@@ -170,7 +192,20 @@ export async function rejectApplication(formData: FormData) {
   const applicationId = formData.get('applicationId') as string
   const jobPostingId = formData.get('jobPostingId') as string
 
+  const { data: application } = await supabase.from('job_applications').select('umkm_id').eq('id', applicationId).single()
+
   await supabase.from('job_applications').update({ status: 'rejected' }).eq('id', applicationId)
+
+  if (application) {
+    const { data: job } = await supabase.from('job_postings').select('description').eq('id', jobPostingId).single()
+    await createNotification(supabase, {
+      userId: application.umkm_id,
+      type: 'application_rejected',
+      title: 'Lamaran kamu tidak dipilih',
+      body: `Untuk: ${job?.description?.slice(0, 50) ?? 'pekerjaan ini'}`,
+      link: `/job/${jobPostingId}`,
+    })
+  }
 
   revalidatePath(`/job/${jobPostingId}`)
 }

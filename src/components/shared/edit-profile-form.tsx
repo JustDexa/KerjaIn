@@ -25,6 +25,7 @@ type Props = {
     offering_type: string | null
     base_price_range: string | null
     operational_hours: string | null
+    banner_url?: string | null
   } | null
 }
 
@@ -34,6 +35,8 @@ export function EditProfileForm({ role, userId, userData, umkmData }: Props) {
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(userData.avatar_url ?? null)
   const [uploading, setUploading] = useState(false)
+  const [bannerFile, setBannerFile] = useState<File | null>(null)
+  const [bannerPreview, setBannerPreview] = useState<string | null>(umkmData?.banner_url ?? null)
 
   function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -74,8 +77,26 @@ async function handleUserSubmit(formData: FormData) {
 
   async function handleUmkmSubmit(formData: FormData) {
     formData.set('offeringType', offeringType)
+
+    if (bannerFile) {
+      const supabase = createClient()
+      const { urls, error } = await uploadFiles(supabase, [bannerFile], 'public-photos', `banners/${userId}`)
+      if (error) {
+        setMsg(`Error upload banner: ${error}`)
+        return
+      }
+      formData.set('bannerUrl', urls[0] ?? '')
+    }
+
     const result = await updateUmkmProfile(formData)
     setMsg(result?.error ? `Error: ${result.error}` : 'Profil UMKM tersimpan ✔')
+  }
+
+  function handleBannerChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setBannerFile(file)
+    setBannerPreview(URL.createObjectURL(file))
   }
 
   return (
@@ -112,6 +133,18 @@ async function handleUserSubmit(formData: FormData) {
           <Separator />
           <form action={handleUmkmSubmit} className="space-y-4">
             <h2 className="text-lg font-semibold">Profil Usaha</h2>
+            <div className="space-y-2">
+              <Label htmlFor="banner">Foto Banner (opsional)</Label>
+              {bannerPreview ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={bannerPreview} alt="Preview banner" className="h-24 w-full rounded-md object-cover" />
+              ) : (
+                <div className="flex h-24 w-full items-center justify-center rounded-md bg-muted text-xs text-muted-foreground">
+                  Belum ada banner — otomatis pakai gradient default
+                </div>
+              )}
+              <Input id="banner" type="file" accept="image/jpeg,image/png,image/webp" onChange={handleBannerChange} />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="businessName">Nama Usaha</Label>
               <Input id="businessName" name="businessName" defaultValue={umkmData?.business_name ?? ''} required />

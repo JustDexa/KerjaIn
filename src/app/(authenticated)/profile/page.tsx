@@ -1,17 +1,21 @@
-import Link from 'next/link'
+
 import { createClient } from '@/lib/supabase/server'
+import { Button } from '@/components/ui/button'
+import { buttonVariants } from '@/components/ui/button'
 import { EditProfileDialog } from '@/components/shared/edit-profile-dialog'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+
 import { Separator } from '@/components/ui/separator'
 import { signOut } from '@/lib/actions/auth'
 import {
   getUserStats, getUmkmStats, getUserActivity, getUmkmActivity,
 } from '@/lib/profile-stats'
+import NextLink from 'next/link'
 import {
   CheckCircle2, Circle, FileText, Star, Wallet, Bell, Lock,
   CreditCard, ShieldQuestion, HelpCircle, LogOut, ChevronRight,
+  Link,
 } from 'lucide-react'
 
 const activityIcons = {
@@ -44,14 +48,14 @@ export default async function ProfilePage() {
     umkmData = data
   }
 
-  const { data: vDocs } = await supabase
+const { data: verification } = await supabase
     .from('verification_documents')
-    .select('status, rejection_note')
+    .select('status')
     .eq('user_id', user!.id)
+    .eq('status', 'verified')
+    .maybeSingle()
 
-  const latestDoc = vDocs && vDocs.length > 0 ? vDocs[vDocs.length - 1] : null
-  const isVerified = latestDoc?.status === 'verified'
-
+  const isVerified = Boolean(verification)
   const stats = isUmkm ? await getUmkmStats(user!.id) : await getUserStats(user!.id)
   const activity = isUmkm ? await getUmkmActivity(user!.id) : await getUserActivity(user!.id)
 
@@ -67,7 +71,7 @@ export default async function ProfilePage() {
   const verificationItems = [
     { label: 'Email', done: Boolean(user?.email_confirmed_at) || true },
     { label: 'No. HP', done: Boolean(userData?.phone) },
-    { label: 'Identitas (KTP)', done: isVerified, note: !isVerified ? 'Fase 10H' : undefined },
+    { label: 'Identitas (KTP)', done: isVerified, note: !isVerified ? 'Akan disetujui admin' : undefined },
   ]
 
   const settingsMenu = [
@@ -123,26 +127,11 @@ export default async function ProfilePage() {
                 </div>
               ))}
 
-              <div className="pt-3">
-{latestDoc?.status === 'pending' ? (
-  <div className="rounded bg-yellow-50 p-2 text-center text-xs font-medium text-yellow-700 border border-yellow-200">
-    Dokumen sedang direview admin.
-  </div>
-) : !isVerified ? (
-  <div className="space-y-2 mt-2">
-    {latestDoc?.status === 'rejected' && (
-      <p className="text-xs font-medium text-red-500 text-center bg-red-50 p-1 rounded">
-        Ditolak: {latestDoc.rejection_note}
-      </p>
-    )}
-    <Link href="/verification" className="block">
-      <Button variant="outline" size="sm" className="w-full">
-        Upload KTP (Fase 10H)
-      </Button>
-    </Link>
-  </div>
-) : null}
-              </div>
+              {!isVerified && (
+                <NextLink href="/verification" className={buttonVariants({ variant: 'outline', size: 'sm' }) + ' mt-3 w-full'}>
+                  Upload KTP
+                </NextLink>
+              )}
             </CardContent>
           </Card>
 

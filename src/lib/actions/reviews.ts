@@ -3,6 +3,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { calculateTrustScore } from '@/lib/trust-score'
 import { redirect } from 'next/navigation'
+import { createNotification } from '../notifications'
+
 
 export async function submitReview(formData: FormData) {
   const supabase = await createClient()
@@ -12,6 +14,7 @@ export async function submitReview(formData: FormData) {
   const transactionId = formData.get('transactionId') as string
   const rating = Number(formData.get('rating'))
   const comment = formData.get('comment') as string
+  const photoUrl = formData.get('photoUrl') as string
 
   if (!rating || rating < 1 || rating > 5) {
     return { error: 'Rating harus antara 1-5' }
@@ -43,11 +46,20 @@ export async function submitReview(formData: FormData) {
       umkm_id: transaction.umkm_id,
       rating,
       comment,
+      photos: photoUrl ? [photoUrl] : null,
     })
     .select('id')
     .single()
 
   if (reviewError) return { error: reviewError.message }
+
+    await createNotification(supabase, {
+    userId: transaction.umkm_id,
+    type: 'new_review',
+    title: 'Kamu menerima review baru',
+    body: `Rating ${rating}/5: ${comment.slice(0, 50)}`,
+    link: `/umkm/trust-score`,
+  })
 
   // 2. Bikin entri portofolio otomatis
   const categoryName = (transaction.job_postings as unknown as { categories: { name: string } | null })?.categories?.name ?? null
@@ -58,6 +70,7 @@ export async function submitReview(formData: FormData) {
     review_id: review.id,
     comment,
     category: categoryName,
+    photos: photoUrl ? [photoUrl] : null,
   })
 
   // 3. Hitung ulang Trust Score & catat perubahan (auditability)

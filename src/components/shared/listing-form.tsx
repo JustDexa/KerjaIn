@@ -1,7 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { addListing } from '@/lib/actions/listings'
+import { createListing, updateListing } from '@/lib/actions/listings'
+import { createClient } from '@/lib/supabase/client'
+import { uploadFiles } from '@/lib/supabase/upload'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -10,73 +12,89 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 
-export function ListingForm() {
-  const [loading, setLoading] = useState(false)
-  const [msg, setMsg] = useState('')
-  const [previews, setPreviews] = useState<string[]>([])
+type Listing = {
+  id: string
+  type: string
+  transaction_type: string
+  title: string
+  description: string | null
+  price: number | null
+  price_unit: string | null
+  estimated_duration: string | null
+  photos: string[] | null
+}
 
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files || [])
-    if (files.length > 0) {
-      // Bikin preview untuk semua foto yang dipilih
-      const newPreviews = files.map(file => URL.createObjectURL(file))
-      setPreviews(newPreviews)
-    }
+export function ListingForm({ existing }: { existing?: Listing }) {
+  const [type, setType] = useState(existing?.type ?? 'jasa')
+  const [transactionType, setTransactionType] = useState(existing?.transaction_type ?? 'one_time')
+  const [photoFile, setPhotoFile] = useState<File | null>(null)
+  const [photoPreview, setPhotoPreview] = useState<string | null>(existing?.photos?.[0] ?? null)
+  const [error, setError] = useState('')
+  const [uploading, setUploading] = useState(false)
+
+  function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setPhotoFile(file)
+    setPhotoPreview(URL.createObjectURL(file))
   }
 
   async function handleSubmit(formData: FormData) {
-    setLoading(true)
-    setMsg('')
-    
-    const result = await addListing(formData)
-    
-    if (result?.error) {
-      setMsg(result.error)
-    } else {
-      setMsg('Listing berhasil ditambahkan ke katalog! ✔')
-      setPreviews([])
-      // Idealnya bisa reset form HTML di sini menggunakan ref
+    setUploading(true)
+    setError('')
+
+    if (photoFile) {
+      const supabase = createClient()
+      const { urls, error: uploadError } = await uploadFiles(supabase, [photoFile], 'public-photos', `listings/${Date.now()}`)
+      if (uploadError) {
+        setUploading(false)
+        setError(`Gagal upload foto: ${uploadError}`)
+        return
+      }
+      formData.set('photoUrl', urls[0] ?? '')
     }
-    setLoading(false)
+
+    formData.set('type', type)
+    formData.set('transactionType', transactionType)
+    if (existing) formData.set('id', existing.id)
+
+    const action = existing ? updateListing : createListing
+    const result = await action(formData)
+    setUploading(false)
+    if (result?.error) setError(result.error)
   }
 
   return (
-    <form action={handleSubmit} className="space-y-6 rounded-lg border p-6 bg-card text-card-foreground shadow-sm">
-      <h3 className="font-semibold text-lg">Tambah Listing Baru</h3>
-      
+    <form action={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="photos">Foto Listing (Bisa lebih dari 1)</Label>
-        <Input 
-          id="photos" 
-          name="photos" 
-          type="file" 
-          accept="image/jpeg,image/png,image/webp" 
-          multiple // <-- Ini kuncinya biar bisa pilih banyak file
-          onChange={handleFileChange}
-          required 
-        />
-        {/* Gallery Preview */}
-        {previews.length > 0 && (
-          <div className="flex gap-2 flex-wrap mt-3">
-            {previews.map((src, idx) => (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img key={idx} src={src} alt={`Preview ${idx}`} className="h-20 w-20 rounded-md object-cover border" />
-            ))}
-          </div>
-        )}
+        <Label htmlFor="photo">Foto</Label>
+        <div className="flex items-center gap-3">
+          {photoPreview ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={photoPreview} alt="Preview" className="size-16 rounded-md object-cover" />
+          ) : (
+            <div className="flex size-16 items-center justify-center rounded-md bg-muted text-xs text-muted-foreground">Foto</div>
+          )}
+          <Input id="photo" type="file" accept="image/jpeg,image/png,image/webp" onChange={handlePhotoChange} className="max-w-64" />
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="title">Judul Listing</Label>
-          <Input id="title" name="title" required placeholder="Mis. Jasa Pembuatan Website" />
-        </div>
+      <div className="space-y-2">
+        <Label htmlFor="title">Judul</Label>
+        <Input id="title" name="title" defaultValue={existing?.title ?? ''} required />
+      </div>
 
+      <div className="space-y-2">
+        <Label htmlFor="description">Deskripsi</Label>
+        <Textarea id="description" name="description" defaultValue={existing?.description ?? ''} rows={3} />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="type">Kategori Utama</Label>
-          <Select name="type" defaultValue="jasa">
+          <Label>Tipe</Label>
+          <Select value={type} onValueChange={(value) => setType(value ?? 'jasa')}>
             <SelectTrigger>
-              <SelectValue placeholder="Pilih tipe" />
+              <SelectValue>{(value: string | null) => ({ jasa: 'Jasa', barang: 'Barang', custom_request: 'Custom Request' }[value ?? ''] ?? 'Pilih tipe')}</SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="jasa">Jasa</SelectItem>
@@ -85,49 +103,41 @@ export function ListingForm() {
             </SelectContent>
           </Select>
         </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="description">Deskripsi Lengkap</Label>
-        <Textarea id="description" name="description" rows={4} required placeholder="Jelaskan detail layanan atau produk..." />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="transactionType">Tipe Transaksi</Label>
-          <Select name="transactionType" defaultValue="one_time">
+          <Label>Jenis Transaksi</Label>
+          <Select value={transactionType} onValueChange={(value) => setTransactionType(value ?? 'one_time')}>
             <SelectTrigger>
-              <SelectValue placeholder="Pilih transaksi" />
+              <SelectValue>{(value: string | null) => ({ one_time: 'One-time Job', project: 'Project', subscription: 'Subscription', rental: 'Rental' }[value ?? ''] ?? 'Pilih jenis transaksi')}</SelectValue>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="one_time">Sekali Bayar</SelectItem>
-              <SelectItem value="project">Berbasis Proyek</SelectItem>
-              <SelectItem value="subscription">Langganan</SelectItem>
-              <SelectItem value="rental">Sewa</SelectItem>
+              <SelectItem value="one_time">One-time Job</SelectItem>
+              <SelectItem value="project">Project</SelectItem>
+              <SelectItem value="subscription">Subscription</SelectItem>
+              <SelectItem value="rental">Rental</SelectItem>
             </SelectContent>
           </Select>
         </div>
+      </div>
 
+      <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="price">Harga (Rp)</Label>
-          <Input id="price" name="price" type="number" placeholder="500000" />
+          <Input id="price" name="price" type="number" min="0" defaultValue={existing?.price ?? ''} />
         </div>
-
         <div className="space-y-2">
           <Label htmlFor="priceUnit">Satuan Harga</Label>
-          <Input id="priceUnit" name="priceUnit" placeholder="Mis. /Bulan, /Proyek" />
+          <Input id="priceUnit" name="priceUnit" placeholder="mis. /jam, /hari, /unit" defaultValue={existing?.price_unit ?? ''} />
         </div>
       </div>
 
-      <Button type="submit" disabled={loading} className="w-full md:w-auto">
-        {loading ? 'Menyimpan ke Server...' : 'Simpan Listing'}
-      </Button>
+      <div className="space-y-2">
+        <Label htmlFor="estimatedDuration">Estimasi Durasi</Label>
+        <Input id="estimatedDuration" name="estimatedDuration" placeholder="mis. 2-3 jam" defaultValue={existing?.estimated_duration ?? ''} />
+      </div>
 
-      {msg && (
-        <p className={`text-sm font-medium ${msg.includes('error') || msg.includes('Gagal') ? 'text-destructive' : 'text-green-600'}`}>
-          {msg}
-        </p>
-      )}
+      {error && <p className="text-sm text-red-500">{error}</p>}
+
+      <Button type="submit" disabled={uploading}>{uploading ? 'Mengunggah...' : existing ? 'Simpan Perubahan' : 'Tambah Listing'}</Button>
     </form>
   )
 }
