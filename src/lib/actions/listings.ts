@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
+import { logActivity } from '@/lib/activity-log'
 
 export async function createListing(formData: FormData) {
   const supabase = await createClient()
@@ -24,6 +25,15 @@ export async function createListing(formData: FormData) {
   })
 
   if (error) return { error: error.message }
+
+  const { data: umkmProfile } = await supabase.from('umkm_profiles').select('business_name').eq('user_id', user.id).single()
+  await logActivity(supabase, {
+    userId: user.id,
+    role: 'umkm',
+    actionType: 'listing_created',
+    description: `${umkmProfile?.business_name ?? 'UMKM'} menambah listing baru`,
+  })
+
   redirect('/umkm/catalog')
 }
 

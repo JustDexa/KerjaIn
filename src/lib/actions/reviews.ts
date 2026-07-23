@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { calculateTrustScore } from '@/lib/trust-score'
 import { redirect } from 'next/navigation'
 import { createNotification } from '../notifications'
-
+import { logActivity } from '@/lib/activity-log'
 
 export async function submitReview(formData: FormData) {
   const supabase = await createClient()
@@ -59,6 +59,13 @@ export async function submitReview(formData: FormData) {
     title: 'Kamu menerima review baru',
     body: `Rating ${rating}/5: ${comment.slice(0, 50)}`,
     link: `/umkm/trust-score`,
+  })
+
+  await logActivity(supabase, {
+    userId: user.id,
+    role: 'user',
+    actionType: 'review_submitted',
+    description: `Memberi review rating ${rating}/5`,
   })
 
   // 2. Bikin entri portofolio otomatis

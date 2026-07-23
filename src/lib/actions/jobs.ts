@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { createNotification } from '../notifications'
+import { logActivity } from '../activity-log'
 
 export async function createJobPosting(formData: FormData) {
   const supabase = await createClient()
@@ -29,6 +30,14 @@ export async function createJobPosting(formData: FormData) {
   }).select('id').single()
 
   if (error) return { error: error.message }
+
+  const { data: userData } = await supabase.from('users').select('full_name').eq('id', user.id).single()
+  await logActivity(supabase, {
+    userId: user.id,
+    role: 'user',
+    actionType: 'job_posted',
+    description: `${userData?.full_name ?? 'User'} membuat permintaan baru`,
+  })
 
   redirect(`/job/${data.id}`)
 }
@@ -69,6 +78,14 @@ export async function createJobPostingFromAi(formData: FormData) {
 
   if (error) return { error: error.message }
 
+  const { data: userData } = await supabase.from('users').select('full_name').eq('id', user.id).single()
+  await logActivity(supabase, {
+    userId: user.id,
+    role: 'user',
+    actionType: 'job_posted',
+    description: `${userData?.full_name ?? 'User'} membuat permintaan via AI Chat`,
+  })
+
   redirect(`/job/${data.id}`)
 }
 
@@ -106,6 +123,13 @@ export async function applyToJob(formData: FormData) {
       link: `/job/${jobPostingId}`,
     })
   }
+
+  await logActivity(supabase, {
+    userId: user.id,
+    role: 'umkm',
+    actionType: 'job_applied',
+    description: `${umkmProfile?.business_name ?? 'UMKM'} melamar pekerjaan`,
+  })
 
   revalidatePath(`/job/${jobPostingId}`)
   return { success: true }
@@ -182,6 +206,13 @@ export async function acceptApplication(formData: FormData) {
     title: 'Lamaran kamu diterima!',
     body: `Deal untuk: ${jobData?.description ?? 'pekerjaan ini'}`,
     link: `/job/${jobPostingId}`,
+  })
+
+  await logActivity(supabase, {
+    userId: user.id,
+    role: 'user',
+    actionType: 'application_accepted',
+    description: `Deal untuk: ${jobData?.description?.slice(0, 50) ?? 'pekerjaan'}`,
   })
 
   redirect(`/job/${jobPostingId}`)

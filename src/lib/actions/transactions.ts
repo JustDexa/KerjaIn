@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
+import { logActivity } from '@/lib/activity-log'
 
 export async function createOrGetTransaction(formData: FormData) {
   const supabase = await createClient()
@@ -99,6 +100,14 @@ export async function markTransactionComplete(formData: FormData) {
       .update({ status: 'completed' })
       .eq('id', transaction.job_posting_id)
   }
+
+  const { data: userData } = await supabase.from('users').select('role, full_name').eq('id', user.id).single()
+  await logActivity(supabase, {
+    userId: user.id,
+    role: (userData?.role as 'user' | 'umkm') ?? 'user',
+    actionType: 'transaction_completed',
+    description: `${userData?.full_name ?? 'Pengguna'} menandai transaksi selesai`,
+  })
 
   revalidatePath(`/transactions/${transactionId}`)
   return { success: true }
