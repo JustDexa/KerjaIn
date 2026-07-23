@@ -18,7 +18,7 @@ export default async function CheckoutPage({ params }: { params: Promise<{ trans
 // ganti select-nya jadi:
   const { data: transaction } = await supabase
     .from('transactions')
-    .select('*, job_postings(description), listings(title), umkm_profiles(business_name)')
+    .select('*, job_postings(description), listings(title), umkm_profiles(business_name, banner_url, users(avatar_url))')
     .eq('id', transactionId)
     .single()
 
@@ -34,16 +34,34 @@ export default async function CheckoutPage({ params }: { params: Promise<{ trans
     <div className="mx-auto max-w-lg p-6">
       <h1 className="mb-6 text-2xl font-bold">Checkout</h1>
 
-      <Card className="mb-6">
-        <CardHeader>
-      <CardTitle className="text-base">
-        {transaction.job_postings?.description?.slice(0, 80) ?? transaction.listings?.title ?? 'Transaksi'}
-      </CardTitle>
+<Card className="mb-6 animate-fade-in-up overflow-hidden">
+        {transaction.umkm_profiles?.banner_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={transaction.umkm_profiles.banner_url} alt="" className="h-20 w-full object-cover" />
+        ) : (
+          <div className="h-20 w-full bg-gradient-to-br from-muted to-muted-foreground/10" />
+        )}
+        <CardHeader className="-mt-6 border-b bg-muted/30 pt-0">
+          <div className="flex items-center gap-3">
+            {transaction.umkm_profiles?.users?.avatar_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={transaction.umkm_profiles.users.avatar_url} alt={transaction.umkm_profiles.business_name ?? ''} className="h-10 w-10 shrink-0 rounded-full border-2 border-background object-cover" />
+            ) : (
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-background bg-foreground text-sm font-medium text-background">
+                {transaction.umkm_profiles?.business_name?.slice(0, 2).toUpperCase()}
+              </div>
+            )}
+            <div className="min-w-0">
+              <CardTitle className="truncate text-base">
+                {transaction.job_postings?.description?.slice(0, 80) ?? transaction.listings?.title ?? 'Transaksi'}
+              </CardTitle>
+              <p className="truncate text-sm text-muted-foreground">{transaction.umkm_profiles?.business_name}</p>
+            </div>
+          </div>
         </CardHeader>
-        <CardContent className="space-y-2">
-          <p className="text-sm text-muted-foreground">UMKM: {transaction.umkm_profiles?.business_name}</p>
+        <CardContent className="space-y-3 pt-0">
           {items && items.length > 0 && (
-            <div className="space-y-1 border-t pt-2">
+            <div className="space-y-1">
               {items.map((item) => (
                 <div key={item.id} className="flex justify-between text-sm">
                   <span>{item.title}{item.quantity > 1 ? ` x${item.quantity}` : ''}</span>
@@ -79,8 +97,16 @@ export default async function CheckoutPage({ params }: { params: Promise<{ trans
       )}
 
       {transaction.payment_status === 'paid' && (
-        <div className="space-y-3">
-          <p className="flex items-center gap-1 text-sm text-green-600"><CheckCircle2 className="h-4 w-4" />Pembayaran lunas</p>
+        <div className="animate-fade-in-up flex flex-col items-center gap-4 rounded-xl border border-success/30 bg-success/5 py-10 text-center">
+          <div className="animate-pop-in flex h-16 w-16 items-center justify-center rounded-full bg-success">
+            <CheckCircle2 className="h-9 w-9 text-success-foreground" />
+          </div>
+          <div>
+            <p className="text-lg font-bold text-success">Pembayaran Lunas!</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Terima kasih, transaksi kamu sudah selesai diproses.
+            </p>
+          </div>
           <Link href={transaction.job_posting_id ? `/job/${transaction.job_posting_id}` : `/transactions/${transaction.id}`}>
             <Button variant="outline">
               {transaction.job_posting_id ? 'Kembali ke Detail Job' : 'Lihat Detail Transaksi'}

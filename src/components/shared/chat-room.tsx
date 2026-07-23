@@ -8,7 +8,8 @@ import { createOrGetTransaction, createMultiItemTransaction } from '@/lib/action
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Handshake, CreditCard, Minus, Plus } from 'lucide-react'
+import { ShoppingBag, CreditCard, Minus, Plus } from 'lucide-react'
+
 type Message = {
   id: string
   conversation_id: string
@@ -175,26 +176,42 @@ export function ChatRoom({
                 <CreditCard className="mr-1.5 size-4" />Lanjut ke Pembayaran
               </Button>
             ) : showDirectDeal && !pickerOpen ? (
-              <Button size="sm" variant="outline" onClick={() => setPickerOpen(true)}>
-                <Handshake className="mr-1.5 size-4" />Tandai Deal
+              <Button
+                size="lg"
+                onClick={() => setPickerOpen(true)}
+                className="w-full bg-accent-brand text-accent-brand-foreground hover:bg-accent-brand/90 sm:w-auto"
+              >
+                <ShoppingBag className="mr-2 size-5" />Order Katalog
               </Button>
             ) : showDirectDeal && pickerOpen ? (
-              <div className="w-full space-y-2">
-                <div className="space-y-1.5 rounded-md border bg-background p-2">
+              <div className="w-full animate-fade-in-up space-y-3">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   {listings.map((l) => {
                     const isSelected = Boolean(selectedItems[l.id])
                     return (
-                      <div key={l.id} className="flex items-center justify-between gap-2 py-1">
-                        <label className="flex flex-1 items-center gap-2 text-sm">
-                          <Checkbox checked={isSelected} onCheckedChange={() => toggleItem(l.id)} />
-                          <span>{l.title}{l.price ? ` — Rp${Number(l.price).toLocaleString('id-ID')}` : ''}</span>
-                        </label>
+                      <div
+                        key={l.id}
+                        onClick={() => toggleItem(l.id)}
+                        className={`flex cursor-pointer flex-col gap-2 rounded-lg border bg-background p-3 transition-all ${
+                          isSelected ? 'border-accent-brand ring-1 ring-accent-brand/40' : 'border-border hover:bg-muted/30'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-start gap-2">
+                            <Checkbox checked={isSelected} onCheckedChange={() => toggleItem(l.id)} onClick={(e) => e.stopPropagation()} />
+                            <div>
+                              <p className="text-sm font-medium leading-tight">{l.title}</p>
+                              {l.price && <p className="text-xs text-muted-foreground">Rp{Number(l.price).toLocaleString('id-ID')}</p>}
+                            </div>
+                          </div>
+                        </div>
+
                         {isSelected && (
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
                             <Button type="button" size="icon" variant="outline" className="size-6" onClick={() => changeQuantity(l.id, -1)}>
                               <Minus className="size-3" />
                             </Button>
-                            <span className="w-4 text-center text-sm">{selectedItems[l.id]}</span>
+                            <span className="w-5 text-center text-sm font-medium">{selectedItems[l.id]}</span>
                             <Button type="button" size="icon" variant="outline" className="size-6" onClick={() => changeQuantity(l.id, 1)}>
                               <Plus className="size-3" />
                             </Button>
@@ -204,14 +221,19 @@ export function ChatRoom({
                     )
                   })}
                 </div>
+
                 {Object.keys(selectedItems).length > 0 && (
-                  <p className="text-sm font-medium">
-                    Total: Rp{listings.reduce((sum, l) => sum + (selectedItems[l.id] ? (l.price ?? 0) * selectedItems[l.id] : 0), 0).toLocaleString('id-ID')}
-                  </p>
+                  <div className="animate-fade-in-up flex items-center justify-between rounded-lg bg-accent-brand/5 p-3">
+                    <span className="text-sm text-muted-foreground">Total</span>
+                    <span className="text-base font-semibold text-accent-brand">
+                      Rp{listings.reduce((sum, l) => sum + (selectedItems[l.id] ? (l.price ?? 0) * selectedItems[l.id] : 0), 0).toLocaleString('id-ID')}
+                    </span>
+                  </div>
                 )}
+
                 <div className="flex gap-2">
-                  <Button size="sm" onClick={handleConfirmDeal}>Konfirmasi Deal</Button>
-                  <Button size="sm" variant="ghost" onClick={() => { setPickerOpen(false); setSelectedItems({}) }}>Batal</Button>
+                  <Button onClick={handleConfirmDeal} className="bg-accent-brand text-accent-brand-foreground hover:bg-accent-brand/90">Konfirmasi Deal</Button>
+                  <Button variant="ghost" onClick={() => { setPickerOpen(false); setSelectedItems({}) }}>Batal</Button>
                 </div>
               </div>
             ) : null}

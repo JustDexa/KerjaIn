@@ -16,6 +16,8 @@ export type MatchCandidate = {
   trustScore: number
   matchedListingTitle: string | null
   matchedPrice: number | null
+  avatarUrl: string | null
+  bannerUrl: string | null
   score: number
   scoreBreakdown: {
     categoryMatch: number
@@ -49,9 +51,9 @@ export async function findMatchingUmkm(requirement: Requirement): Promise<MatchC
 
   if (!umkmIds || umkmIds.length === 0) return []
 
-  const { data: profiles } = await supabase
+const { data: profiles } = await supabase
     .from('umkm_profiles')
-    .select('user_id, business_name, service_area, trust_score, description, base_price_range')
+    .select('user_id, business_name, service_area, trust_score, description, base_price_range, banner_url, users(avatar_url)')
     .in('user_id', umkmIds)
 
   if (!profiles || profiles.length === 0) return []
@@ -90,6 +92,8 @@ export async function findMatchingUmkm(requirement: Requirement): Promise<MatchC
 
     const totalScore = Math.round(categoryMatch + trustScoreContribution + priceMatch + profileCompleteness)
 
+    const userRelation = Array.isArray(profile.users) ? profile.users[0] : profile.users
+
     return {
       umkmId: profile.user_id,
       businessName: profile.business_name,
@@ -97,6 +101,8 @@ export async function findMatchingUmkm(requirement: Requirement): Promise<MatchC
       trustScore: profile.trust_score ?? 0,
       matchedListingTitle: bestListing?.title ?? null,
       matchedPrice: bestListing?.price ? Number(bestListing.price) : null,
+      avatarUrl: userRelation?.avatar_url ?? null,
+      bannerUrl: profile.banner_url ?? null,
       score: totalScore,
       scoreBreakdown: {
         categoryMatch,

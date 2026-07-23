@@ -3,9 +3,11 @@
 import { useState } from 'react'
 import { signIn } from '@/lib/actions/auth'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { AuthLogo } from '@/components/shared/auth-logo'
+import { IconInput } from '@/components/shared/icon-input'
+import { Mail, Lock } from 'lucide-react'
 
 export default function LoginPage() {
   const [error, setError] = useState('')
@@ -16,29 +18,33 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Login ke KerjaIn</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form action={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" name="email" type="email" required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input id="password" name="password" type="password" required />
-            </div>
-            {error && <p className="text-sm text-red-500">{error}</p>}
-            <Button type="submit" className="w-full">Login</Button>
-          </form>
-          <p className="mt-4 text-center text-sm">
-            Belum punya akun? <a href="/register" className="underline">Daftar</a>
-          </p>
-        </CardContent>
-      </Card>
+    <div className="flex min-h-screen flex-col items-center justify-center p-4">
+      <div className="w-full max-w-md animate-fade-in-up">
+        <AuthLogo />
+        <Card>
+          <CardHeader>
+            <CardTitle>Masuk ke akun kamu</CardTitle>
+            <CardDescription>Lanjutkan ke KerjaIn buat cari atau tawarin jasa</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form action={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <IconInput icon={Mail} id="email" name="email" type="email" placeholder="nama@email.com" required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <IconInput icon={Lock} id="password" name="password" type="password" placeholder="••••••••" required />
+              </div>
+              {error && <p className="text-sm text-destructive">{error}</p>}
+              <Button type="submit" className="w-full">Masuk</Button>
+            </form>
+            <p className="mt-4 text-center text-sm text-muted-foreground">
+              Belum punya akun? <a href="/register" className="font-medium text-foreground underline underline-offset-4">Daftar</a>
+            </p>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

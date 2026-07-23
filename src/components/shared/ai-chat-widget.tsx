@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { saveExtractedRequirement } from '@/lib/actions/ai'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Search } from 'lucide-react'
+import { Search, Sparkles } from 'lucide-react'
 
 type ChatMessage = { role: 'user' | 'assistant'; content: string }
 
@@ -30,7 +30,7 @@ export function AiChatWidget() {
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+  }, [messages, loading])
 
   async function sendMessage() {
     const text = input.trim()
@@ -70,7 +70,7 @@ export function AiChatWidget() {
     <div className="flex h-[70vh] flex-col">
       <div className="flex-1 space-y-2 overflow-y-auto rounded-md border p-4">
         {messages.map((m, i) => (
-          <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+          <div key={i} className={`flex animate-fade-in-up ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
               m.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'
             }`}>
@@ -78,13 +78,24 @@ export function AiChatWidget() {
             </div>
           </div>
         ))}
-        {loading && <p className="text-xs text-muted-foreground">AI sedang mengetik...</p>}
+        {loading && (
+          <div className="flex animate-fade-in-up justify-start">
+            <div className="flex items-center gap-1 rounded-lg bg-muted px-3 py-2.5">
+              <span className="h-1.5 w-1.5 animate-typing-dot rounded-full bg-muted-foreground" style={{ animationDelay: '0ms' }} />
+              <span className="h-1.5 w-1.5 animate-typing-dot rounded-full bg-muted-foreground" style={{ animationDelay: '150ms' }} />
+              <span className="h-1.5 w-1.5 animate-typing-dot rounded-full bg-muted-foreground" style={{ animationDelay: '300ms' }} />
+            </div>
+          </div>
+        )}
         <div ref={bottomRef} />
       </div>
 
       {ready && extracted && (
-        <div className="mt-3 rounded-md border bg-muted/50 p-3">
-          <p className="mb-2 text-sm font-medium">Kebutuhan kamu udah cukup jelas nih:</p>
+        <div className="mt-3 animate-fade-in-up rounded-md border border-accent-brand/30 bg-accent-brand/5 p-3">
+          <div className="mb-2 flex items-center gap-1.5">
+            <Sparkles className="h-4 w-4 text-accent-brand" />
+            <p className="text-sm font-medium">Kebutuhan kamu udah cukup jelas nih:</p>
+          </div>
           <ul className="mb-3 space-y-1 text-xs text-muted-foreground">
             <li>Kategori: {extracted.category}</li>
             <li>Deskripsi: {extracted.description}</li>
@@ -93,7 +104,7 @@ export function AiChatWidget() {
               <li>Budget: Rp{extracted.budget_min?.toLocaleString('id-ID')} - Rp{extracted.budget_max?.toLocaleString('id-ID')}</li>
             )}
           </ul>
-          <Button onClick={handleFindRecommendations} disabled={saving} className="w-full">
+          <Button onClick={handleFindRecommendations} disabled={saving} className="w-full bg-accent-brand text-accent-brand-foreground hover:bg-accent-brand/90">
             {saving ? 'Mencari...' : (<><Search className="mr-2 h-4 w-4" />Cari Rekomendasi UMKM</>)}
           </Button>
         </div>
@@ -107,7 +118,7 @@ export function AiChatWidget() {
           placeholder="Ketik kebutuhan kamu..."
           disabled={loading}
         />
-        <Button onClick={sendMessage} disabled={loading}>Kirim</Button>
+        <Button onClick={sendMessage} disabled={loading} className="active:scale-95">Kirim</Button>
       </div>
     </div>
   )
