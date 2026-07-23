@@ -55,6 +55,7 @@ export default async function AdminDashboardPage() {
       <div className="mt-6 flex gap-4">
         <Link href="/admin/categories"><Button variant="outline">Kelola Kategori</Button></Link>
         <Link href="/admin/monitoring"><Button variant="outline">Monitoring Aktivitas</Button></Link>
+        <Link href="/admin/impact"><Button variant="outline">Impact Dashboard</Button></Link>
       </div>
     </div>
   )
