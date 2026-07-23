@@ -48,6 +48,11 @@ export function JobPostingForm({ categories }: { categories: Category[] }) {
       </div>
 
       <div className="space-y-2">
+        <Label htmlFor="title">Judul</Label>
+        <Input id="title" name="title" placeholder="mis. Butuh tukang servis AC" required />
+      </div>
+
+      <div className="space-y-2">
         <Label htmlFor="description">Deskripsi Kebutuhan</Label>
         <Textarea id="description" name="description" rows={4} placeholder="Jelasin kebutuhan lo detail..." required />
       </div>

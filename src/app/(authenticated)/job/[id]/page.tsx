@@ -70,7 +70,8 @@ let applications: Application[] = []
         <Badge variant="outline">{jobStatusLabel(job.status)}</Badge>
       </div>
 
-      <h1 className="mb-2 text-xl font-bold">{job.description}</h1>
+      <h1 className="mb-1 text-xl font-bold">{job.title ?? job.description.slice(0, 60)}</h1>
+      <p className="mb-2 text-sm text-muted-foreground">{job.description}</p>
       <p className="flex items-center gap-1 text-sm text-muted-foreground"><MapPin className="h-4 w-4" />{job.location}</p>
       {(job.budget_min || job.budget_max) && (
         <p className="mt-2 text-sm font-medium">

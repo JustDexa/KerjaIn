@@ -52,8 +52,7 @@ export default async function AdminImpactPage({
   // Tabel detail job posting
   let jobsQuery = supabase
     .from('job_postings')
-    .select('id, description, is_urgent, status, created_at, categories(name)', { count: 'exact' })
-    .gte('created_at', startDate)
+.select('id, title, description, is_urgent, status, created_at, categories(name)', { count: 'exact' })    .gte('created_at', startDate)
     .order('created_at', { ascending: false })
     .range((currentPage - 1) * pageSize, currentPage * pageSize - 1)
 
@@ -128,8 +127,7 @@ export default async function AdminImpactPage({
               )}
               {jobs?.map((job) => (
                 <tr key={job.id} className="border-b last:border-0">
-                  <td className="p-3">{job.description.slice(0, 40)}</td>
-                  <td className="p-3">{(job.categories as unknown as { name: string }[] | null)?.[0]?.name ?? '-'}</td>
+<td className="p-3">{job.title ?? job.description.slice(0, 40)}</td>                  <td className="p-3">{(job.categories as unknown as { name: string }[] | null)?.[0]?.name ?? '-'}</td>
                   <td className="p-3"><Badge variant="outline">{statusLabels[job.status] ?? job.status}</Badge></td>
                   <td className="p-3">{job.is_urgent ? <Badge variant="destructive">Urgent</Badge> : <span className="text-muted-foreground">Normal</span>}</td>
                   <td className="p-3 text-muted-foreground">{new Date(job.created_at).toLocaleDateString('id-ID')}</td>

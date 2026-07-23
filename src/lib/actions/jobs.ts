@@ -21,6 +21,7 @@ export async function createJobPosting(formData: FormData) {
   const { data, error } = await supabase.from('job_postings').insert({
     user_id: user.id,
     category_id: formData.get('categoryId') as string,
+    title: formData.get('title') as string,
     description: formData.get('description') as string,
     location: formData.get('location') as string,
     budget_min: budgetMin,
@@ -68,6 +69,7 @@ export async function createJobPostingFromAi(formData: FormData) {
   const { data, error } = await supabase.from('job_postings').insert({
     user_id: user.id,
     category_id: categoryId,
+    title: description.slice(0, 60),
     description,
     location,
     budget_min: budgetMin,

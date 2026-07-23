@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { jobStatusLabel } from '@/lib/status-labels'
 
 export default async function MyJobsPage() {
   const supabase = await createClient()
@@ -28,8 +29,8 @@ export default async function MyJobsPage() {
           <Link key={job.id} href={`/job/${job.id}`}>
             <Card className="hover:bg-muted/50">
               <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-base">{job.description.slice(0, 60)}</CardTitle>
-                <Badge variant="outline">{job.status}</Badge>
+                <CardTitle className="text-base">{job.title ?? job.description.slice(0, 60)}</CardTitle>
+                <Badge variant="outline">{jobStatusLabel(job.status)}</Badge>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">{job.categories?.name} · {job.location}</p>
