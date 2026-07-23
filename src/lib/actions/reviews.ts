@@ -61,11 +61,12 @@ export async function submitReview(formData: FormData) {
     link: `/umkm/trust-score`,
   })
 
+  const { data: reviewerData } = await supabase.from('users').select('full_name').eq('id', user.id).single()
   await logActivity(supabase, {
     userId: user.id,
     role: 'user',
     actionType: 'review_submitted',
-    description: `Memberi review rating ${rating}/5`,
+    description: `${reviewerData?.full_name ?? 'User'} memberi review rating ${rating}/5`,
   })
 
   // 2. Bikin entri portofolio otomatis

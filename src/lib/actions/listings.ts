@@ -27,11 +27,12 @@ export async function createListing(formData: FormData) {
   if (error) return { error: error.message }
 
   const { data: umkmProfile } = await supabase.from('umkm_profiles').select('business_name').eq('user_id', user.id).single()
+  const listingTitle = formData.get('title') as string
   await logActivity(supabase, {
     userId: user.id,
     role: 'umkm',
     actionType: 'listing_created',
-    description: `${umkmProfile?.business_name ?? 'UMKM'} menambah listing baru`,
+    description: `${umkmProfile?.business_name ?? 'UMKM'} menambahkan listing — ${listingTitle}`,
   })
 
   redirect('/umkm/catalog')

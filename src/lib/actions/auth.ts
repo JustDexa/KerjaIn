@@ -49,7 +49,7 @@ export async function signIn(formData: FormData) {
         userId: data.user.id,
         role: userData.role as 'user' | 'umkm' | 'admin',
         actionType: 'login',
-        description: `${userData.full_name ?? 'Pengguna'} login`,
+        description: `${userData.full_name ?? 'Pengguna'} login ke platform`,
       })
     }
   }

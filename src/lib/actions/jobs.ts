@@ -31,12 +31,13 @@ export async function createJobPosting(formData: FormData) {
 
   if (error) return { error: error.message }
 
-  const { data: userData } = await supabase.from('users').select('full_name').eq('id', user.id).single()
+  const jobDescription = formData.get('description') as string
+  const { data: posterData } = await supabase.from('users').select('full_name').eq('id', user.id).single()
   await logActivity(supabase, {
     userId: user.id,
     role: 'user',
     actionType: 'job_posted',
-    description: `${userData?.full_name ?? 'User'} membuat permintaan baru`,
+    description: `${posterData?.full_name ?? 'User'} membuat permintaan — ${jobDescription.slice(0, 40)}`,
   })
 
   redirect(`/job/${data.id}`)
@@ -128,7 +129,7 @@ export async function applyToJob(formData: FormData) {
     userId: user.id,
     role: 'umkm',
     actionType: 'job_applied',
-    description: `${umkmProfile?.business_name ?? 'UMKM'} melamar pekerjaan`,
+    description: `${umkmProfile?.business_name ?? 'UMKM'} melamar pekerjaan — ${job?.description?.slice(0, 40) ?? ''}`,
   })
 
   revalidatePath(`/job/${jobPostingId}`)
@@ -208,11 +209,12 @@ export async function acceptApplication(formData: FormData) {
     link: `/job/${jobPostingId}`,
   })
 
+  const { data: accepterData } = await supabase.from('users').select('full_name').eq('id', user.id).single()
   await logActivity(supabase, {
     userId: user.id,
     role: 'user',
     actionType: 'application_accepted',
-    description: `Deal untuk: ${jobData?.description?.slice(0, 50) ?? 'pekerjaan'}`,
+    description: `${accepterData?.full_name ?? 'User'} deal untuk — ${jobData?.description?.slice(0, 40) ?? 'pekerjaan'}`,
   })
 
   redirect(`/job/${jobPostingId}`)
