@@ -78,13 +78,13 @@ export async function markTransactionComplete(formData: FormData) {
 
   if (!transaction) return { error: 'Transaksi tidak ditemukan' }
 
-  // cuma User (pemilik job) atau UMKM yang terlibat yang boleh tandain selesai
-  if (transaction.user_id !== user.id && transaction.umkm_id !== user.id) {
-    return { error: 'Tidak diizinkan' }
+  // sekarang cuma UMKM yang boleh tandain selesai (bukan User)
+  if (transaction.umkm_id !== user.id) {
+    return { error: 'Cuma UMKM yang bisa menandai pekerjaan selesai' }
   }
 
-  if (transaction.payment_status === 'pending') {
-    return { error: 'Belum bisa ditandai selesai — pembayaran belum dilakukan' }
+  if (transaction.payment_status !== 'paid') {
+    return { error: 'Belum bisa ditandai selesai — pembayaran belum lunas' }
   }
 
   const { error } = await supabase

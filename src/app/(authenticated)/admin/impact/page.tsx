@@ -13,9 +13,11 @@ const periodLabels: Record<string, string> = { '7': '7 hari terakhir', '30': '30
 export default async function AdminImpactPage({
   searchParams,
 }: {
-  searchParams: Promise<{ period?: string; category?: string }>
+  searchParams: Promise<{ period?: string; category?: string; page?: string }>
 }) {
-  const { period = '30', category } = await searchParams
+  const { period = '30', category, page = '1' } = await searchParams
+  const currentPage = Math.max(1, Number(page) || 1)
+  const pageSize = 10
   const supabase = await createClient()
 
   const startDate = new Date(Date.now() - Number(period) * 24 * 60 * 60 * 1000).toISOString()
@@ -50,14 +52,15 @@ export default async function AdminImpactPage({
   // Tabel detail job posting
   let jobsQuery = supabase
     .from('job_postings')
-    .select('id, description, is_urgent, status, created_at, categories(name)')
+    .select('id, description, is_urgent, status, created_at, categories(name)', { count: 'exact' })
     .gte('created_at', startDate)
     .order('created_at', { ascending: false })
-    .limit(20)
+    .range((currentPage - 1) * pageSize, currentPage * pageSize - 1)
 
   if (category) jobsQuery = jobsQuery.eq('category_id', category)
 
-  const { data: jobs } = await jobsQuery
+  const { data: jobs, count: totalJobs } = await jobsQuery
+  const totalPages = Math.max(1, Math.ceil((totalJobs ?? 0) / pageSize))
 
   const categoryLabel = category ? categories?.find((c) => c.id === category)?.name ?? 'Kategori terpilih' : 'Semua Kategori'
 
@@ -137,6 +140,18 @@ export default async function AdminImpactPage({
               ))}
             </tbody>
           </table>
+        </div>
+
+        <div className="mt-4 flex items-center justify-between text-sm">
+          <span className="text-muted-foreground">Halaman {currentPage} dari {totalPages}</span>
+          <div className="flex gap-2">
+            <Link href={`/admin/impact?period=${period}${category ? `&category=${category}` : ''}&page=${Math.max(1, currentPage - 1)}`}>
+              <Button variant="outline" size="sm" disabled={currentPage <= 1}>Sebelumnya</Button>
+            </Link>
+            <Link href={`/admin/impact?period=${period}${category ? `&category=${category}` : ''}&page=${Math.min(totalPages, currentPage + 1)}`}>
+              <Button variant="outline" size="sm" disabled={currentPage >= totalPages}>Selanjutnya</Button>
+            </Link>
+          </div>
         </div>
       </div>
     </div>

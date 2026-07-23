@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { paymentStatusLabel } from '@/lib/status-labels'
 import { CheckCircle2 } from 'lucide-react'
+import { payRemainingBalance } from '@/lib/actions/payments'
 
 export default async function CheckoutPage({ params }: { params: Promise<{ transactionId: string }> }) {
   const { transactionId } = await params
@@ -49,15 +50,27 @@ export default async function CheckoutPage({ params }: { params: Promise<{ trans
         <CheckoutForm transactionId={transaction.id} totalAmount={Number(transaction.total_amount ?? 0)} />
       )}
 
-      {transaction.payment_status !== 'pending' && (
+    {transaction.payment_status === 'dp_paid' && (
         <div className="space-y-3">
-          <p className="flex items-center gap-1 text-sm text-green-600">
-            <CheckCircle2 className="h-4 w-4" />
-            {transaction.payment_status === 'paid' ? 'Pembayaran lunas' : 'DP sudah dibayar'}
-          </p>
-        <Link href={transaction.job_posting_id ? `/job/${transaction.job_posting_id}` : `/chat`}>
-          <Button variant="outline">Kembali</Button>
-        </Link>
+          <p className="text-sm text-yellow-600">DP sudah dibayar. Sisa: Rp{(Number(transaction.total_amount ?? 0) - Number(transaction.dp_amount ?? 0)).toLocaleString('id-ID')}</p>
+          <form action={async (formData) => {
+            'use server'
+            await payRemainingBalance(formData)
+          }}>
+            <input type="hidden" name="transactionId" value={transaction.id} />
+            <Button type="submit">Lunasi Sisa Pembayaran</Button>
+          </form>
+        </div>
+      )}
+
+      {transaction.payment_status === 'paid' && (
+        <div className="space-y-3">
+          <p className="flex items-center gap-1 text-sm text-green-600"><CheckCircle2 className="h-4 w-4" />Pembayaran lunas</p>
+          <Link href={transaction.job_posting_id ? `/job/${transaction.job_posting_id}` : `/transactions/${transaction.id}`}>
+            <Button variant="outline">
+              {transaction.job_posting_id ? 'Kembali ke Detail Job' : 'Lihat Detail Transaksi'}
+            </Button>
+          </Link>
         </div>
       )}
     </div>

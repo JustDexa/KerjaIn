@@ -2,6 +2,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
 import { VerificationReviewRow } from '@/components/shared/verification-review-row'
 import { MonitoringLiveBadge } from '@/components/shared/monitoring-live-badge'
 import { Users, Activity, UserCheck, Store } from 'lucide-react'
@@ -13,7 +15,14 @@ function normalizeUserRelation(u: UserRelation | UserRelation[] | null | undefin
   return Array.isArray(u) ? (u[0] ?? null) : u
 }
 
-export default async function AdminMonitoringPage() {
+export default async function AdminMonitoringPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>
+}) {
+  const { page = '1' } = await searchParams
+  const currentPage = Math.max(1, Number(page) || 1)
+  const pageSize = 10
   const supabase = await createClient()
 
   const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
@@ -24,7 +33,7 @@ export default async function AdminMonitoringPage() {
     { count: activityToday },
     { count: totalUsers },
     { count: totalUmkm },
-    { data: recentActivity },
+    { data: recentActivity, count: totalActivityLogs },
     { data: roleDistribution },
     { data: pendingVerifications },
   ] = await Promise.all([
@@ -32,7 +41,7 @@ export default async function AdminMonitoringPage() {
     supabase.from('activity_logs').select('*', { count: 'exact', head: true }).gte('created_at', startOfToday),
     supabase.from('users').select('*', { count: 'exact', head: true }).eq('role', 'user'),
     supabase.from('users').select('*', { count: 'exact', head: true }).eq('role', 'umkm'),
-    supabase.from('activity_logs').select('*, users(full_name)').order('created_at', { ascending: false }).limit(10),
+    supabase.from('activity_logs').select('*, users(full_name)', { count: 'exact' }).order('created_at', { ascending: false }).range((currentPage - 1) * pageSize, currentPage * pageSize - 1),
     supabase.from('activity_logs').select('role').gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()),
     supabase
       .from('verification_documents')
@@ -143,6 +152,18 @@ export default async function AdminMonitoringPage() {
               </CardContent>
             </Card>
           ))}
+        </div>
+
+        <div className="mt-4 flex items-center justify-between text-sm">
+          <span className="text-muted-foreground">Halaman {currentPage} dari {Math.max(1, Math.ceil((totalActivityLogs ?? 0) / pageSize))}</span>
+          <div className="flex gap-2">
+            <Link href={`/admin/monitoring?page=${Math.max(1, currentPage - 1)}`}>
+              <Button variant="outline" size="sm" disabled={currentPage <= 1}>Sebelumnya</Button>
+            </Link>
+            <Link href={`/admin/monitoring?page=${currentPage + 1}`}>
+              <Button variant="outline" size="sm">Selanjutnya</Button>
+            </Link>
+          </div>
         </div>
       </div>
     </div>

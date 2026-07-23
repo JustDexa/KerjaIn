@@ -77,7 +77,7 @@ export default async function TransactionDetailPage({ params }: { params: Promis
         ))}
       </div>
 
-      {transaction.status === 'in_progress' && transaction.payment_status !== 'pending' && (
+      {transaction.status === 'in_progress' && transaction.payment_status === 'paid' && !isUser && (
         <MarkCompleteButton transactionId={transaction.id} />
       )}
 
