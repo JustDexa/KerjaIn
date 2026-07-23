@@ -43,7 +43,6 @@ export default async function UmkmDashboardPage() {
     .eq('umkm_id', user!.id)
 
   const totalListings = listings?.length ?? 0
-  const activeListings = listings?.filter((l) => l.status === 'active').length ?? 0
 
   const { data: recentApplications } = await supabase
     .from('job_applications')
@@ -170,11 +169,15 @@ export default async function UmkmDashboardPage() {
               <h2 className="font-semibold">Kelola Katalog</h2>
             </div>
             <p className="mb-4 text-sm text-muted-foreground">Kelola produk, harga, dan ketersediaan katalog kamu.</p>
-            <div className="mb-4 space-y-2 rounded-lg bg-muted/30 p-3 text-sm">
-              <div className="flex justify-between"><span className="text-muted-foreground">Total Produk</span><span className="font-medium">{totalListings}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Produk Aktif</span><span className="font-medium">{activeListings}</span></div>
+
+            <div className="flex flex-1 flex-col items-center justify-center">
+              <div className="w-full rounded-lg bg-muted/30 p-4 text-center">
+                <p className="text-3xl font-bold">{totalListings}</p>
+                <p className="text-xs text-muted-foreground">Total Produk</p>
+              </div>
             </div>
-            <div className="mt-auto">
+
+            <div className="mt-4">
               <Link href="/umkm/catalog">
                 <Button className="w-full bg-accent-brand text-accent-brand-foreground hover:bg-accent-brand/90">Kelola Katalog</Button>
               </Link>

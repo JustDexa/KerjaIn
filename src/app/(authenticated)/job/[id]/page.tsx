@@ -52,6 +52,12 @@ const { data: conversation } = await supabase
     .eq('job_posting_id', id)
     .maybeSingle()
 
+  const { data: transaction } = await supabase
+    .from('transactions')
+    .select('id, status, payment_status')
+    .eq('job_posting_id', id)
+    .maybeSingle()
+
 let applications: Application[] = []
   if (isOwner) {
     const { data } = await supabase
@@ -81,11 +87,11 @@ let applications: Application[] = []
       <p className="mt-1 text-xs text-muted-foreground">Diposting oleh {job.users?.full_name}</p>
 
       {conversation && (job.status === 'deal' || job.status === 'completed') && (
-        <div className="mt-4 flex gap-2">
+        <div className="mt-4 flex flex-wrap gap-2">
           <Link href={`/chat/${conversation.id}`}>
             <Button size="sm"><MessageCircle className="mr-2 h-4 w-4" />Buka Chat</Button>
           </Link>
-          {isOwner && job.status === 'deal' && (
+          {isOwner && job.status === 'deal' && !transaction && (
             <form action={async (formData) => {
               'use server'
               const result = await createOrGetTransaction(formData)
@@ -96,6 +102,14 @@ let applications: Application[] = []
               <input type="hidden" name="jobPostingId" value={job.id} />
               <Button type="submit" size="sm" variant="secondary"><CreditCard className="mr-2 h-4 w-4" />Checkout & Bayar</Button>
             </form>
+          )}
+          {transaction && (
+            <Link href={transaction.payment_status === 'pending' ? `/checkout/${transaction.id}` : `/transactions/${transaction.id}`}>
+              <Button size="sm" variant="secondary">
+                <CreditCard className="mr-2 h-4 w-4" />
+                {transaction.status === 'completed' ? 'Lihat Transaksi' : isUmkm && !isOwner ? 'Kelola Transaksi' : 'Lihat Pembayaran'}
+              </Button>
+            </Link>
           )}
         </div>
       )}
