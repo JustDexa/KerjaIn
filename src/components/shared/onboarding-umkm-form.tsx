@@ -7,15 +7,21 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select'
+
 
 type Category = { id: string; name: string }
 
 export function OnboardingUmkmForm({ categories }: { categories: Category[] }) {
   const [offeringType, setOfferingType] = useState('jasa')
+  const [serviceArea, setServiceArea] = useState('')
   const [error, setError] = useState('')
 
   async function handleSubmit(formData: FormData) {
     formData.set('offeringType', offeringType)
+    formData.set('serviceArea', serviceArea)
     const result = await createUmkmProfile(formData)
     if (result?.error) setError(result.error)
   }
@@ -33,8 +39,21 @@ export function OnboardingUmkmForm({ categories }: { categories: Category[] }) {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="serviceArea">Wilayah Layanan</Label>
-        <Input id="serviceArea" name="serviceArea" placeholder="mis. Solo, Sukoharjo" required />
+        <Label>Wilayah Layanan</Label>
+        <Select value={serviceArea} onValueChange={(v) => setServiceArea(v ?? '')}>
+          <SelectTrigger>
+            <SelectValue>{(v: string | null) => v || 'Pilih wilayah'}</SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="Solo">Solo</SelectItem>
+            <SelectItem value="Sukoharjo">Sukoharjo</SelectItem>
+            <SelectItem value="Karanganyar">Karanganyar</SelectItem>
+            <SelectItem value="Boyolali">Boyolali</SelectItem>
+            <SelectItem value="Klaten">Klaten</SelectItem>
+            <SelectItem value="Sragen">Sragen</SelectItem>
+            <SelectItem value="Wonogiri">Wonogiri</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="space-y-2">

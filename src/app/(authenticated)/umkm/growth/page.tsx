@@ -57,7 +57,7 @@ export default async function GrowthDashboardPage() {
           <p className="text-sm">{narrative.priceInsight}</p>
           <div className="mt-3 flex justify-between text-xs text-muted-foreground">
             <span>Harga kamu: Rp{growthData.avgPriceThisUmkm.toLocaleString('id-ID')}</span>
-            <span>Rata-rata wilayah: Rp{growthData.avgPriceRegion.toLocaleString('id-ID')}</span>
+            <span>Rata-rata sekategori: Rp{growthData.avgPriceRegion.toLocaleString('id-ID')}</span>
           </div>
         </CardContent>
       </Card>

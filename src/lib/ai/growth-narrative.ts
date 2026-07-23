@@ -8,8 +8,7 @@ export async function generateGrowthNarrative(businessName: string, data: Growth
 - Pendapatan bulan lalu: Rp${data.previousMonthRevenue.toLocaleString('id-ID')}
 - Perubahan: ${data.revenueChangePercent}%
 - Harga rata-rata listing mereka: Rp${data.avgPriceThisUmkm.toLocaleString('id-ID')}
-- Harga rata-rata di wilayah yang sama: Rp${data.avgPriceRegion.toLocaleString('id-ID')}
-- Kategori paling laku: ${data.busiestCategory ?? 'belum ada data'}
+- Harga rata-rata UMKM lain di kategori & wilayah yang sama: Rp${data.avgPriceRegion.toLocaleString('id-ID')}- Kategori paling laku: ${data.busiestCategory ?? 'belum ada data'}
 - Total pekerjaan selesai: ${data.totalCompletedJobs}
 - Kelengkapan profil: ${data.profileCompleteness.percent}%
 

@@ -27,6 +27,7 @@ type Listing = {
 export function ListingForm({ existing }: { existing?: Listing }) {
   const [type, setType] = useState(existing?.type ?? 'jasa')
   const [transactionType, setTransactionType] = useState(existing?.transaction_type ?? 'one_time')
+  const [duration, setDuration] = useState(existing?.estimated_duration ?? '')
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [photoPreview, setPhotoPreview] = useState<string | null>(existing?.photos?.[0] ?? null)
   const [error, setError] = useState('')
@@ -56,6 +57,7 @@ export function ListingForm({ existing }: { existing?: Listing }) {
 
     formData.set('type', type)
     formData.set('transactionType', transactionType)
+    formData.set('estimatedDuration', duration)
     if (existing) formData.set('id', existing.id)
 
     const action = existing ? updateListing : createListing
@@ -131,8 +133,21 @@ export function ListingForm({ existing }: { existing?: Listing }) {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="estimatedDuration">Estimasi Durasi</Label>
-        <Input id="estimatedDuration" name="estimatedDuration" placeholder="mis. 2-3 jam" defaultValue={existing?.estimated_duration ?? ''} />
+        <Label>Estimasi Durasi</Label>
+        <Select value={duration} onValueChange={(v) => setDuration(v ?? '')}>
+          <SelectTrigger>
+            <SelectValue>{(v: string | null) => v || 'Pilih estimasi durasi'}</SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="1-2 jam">1-2 jam</SelectItem>
+            <SelectItem value="2-4 jam">2-4 jam</SelectItem>
+            <SelectItem value="1 hari">1 hari</SelectItem>
+            <SelectItem value="2-3 hari">2-3 hari</SelectItem>
+            <SelectItem value="1 minggu">1 minggu</SelectItem>
+            <SelectItem value="Lebih dari 1 minggu">Lebih dari 1 minggu</SelectItem>
+            <SelectItem value="Sesuai kesepakatan">Sesuai kesepakatan</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {error && <p className="text-sm text-red-500">{error}</p>}

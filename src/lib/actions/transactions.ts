@@ -179,5 +179,64 @@ export async function createTransactionFromListing(formData: FormData) {
     content: `Memesan: "${listingDetail?.title ?? 'layanan ini'}"${listing.price ? ` — Rp${Number(listing.price).toLocaleString('id-ID')}` : ''}`,
   })
 
+  
+  redirect(`/checkout/${transaction.id}`)
+}
+
+export async function createMultiItemTransaction(formData: FormData) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const conversationId = formData.get('conversationId') as string
+  const itemsRaw = formData.get('items') as string // JSON string: [{listingId, title, price, quantity}]
+  const items = JSON.parse(itemsRaw) as { listingId: string; title: string; price: number; quantity: number }[]
+
+  if (!items || items.length === 0) {
+    return { error: 'Pilih minimal 1 item' }
+  }
+
+  const { data: conversation } = await supabase
+    .from('conversations')
+    .select('umkm_id')
+    .eq('id', conversationId)
+    .single()
+
+  if (!conversation) return { error: 'Percakapan tidak ditemukan' }
+
+  const totalAmount = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
+
+  const { data: transaction, error } = await supabase
+    .from('transactions')
+    .insert({
+      conversation_id: conversationId,
+      user_id: user.id,
+      umkm_id: conversation.umkm_id,
+      transaction_type: items.length > 1 ? 'project' : 'one_time',
+      total_amount: totalAmount,
+    })
+    .select('id')
+    .single()
+
+  if (error) return { error: error.message }
+
+  const itemRows = items.map((item) => ({
+    transaction_id: transaction.id,
+    listing_id: item.listingId,
+    title: item.title,
+    price: item.price,
+    quantity: item.quantity,
+    subtotal: item.price * item.quantity,
+  }))
+
+  await supabase.from('transaction_items').insert(itemRows)
+
+  const summary = items.map((i) => `${i.title}${i.quantity > 1 ? ` (x${i.quantity})` : ''}`).join(', ')
+  await supabase.from('messages').insert({
+    conversation_id: conversationId,
+    sender_id: user.id,
+    content: `Memesan: ${summary} — Rp${totalAmount.toLocaleString('id-ID')}`,
+  })
+
   redirect(`/checkout/${transaction.id}`)
 }

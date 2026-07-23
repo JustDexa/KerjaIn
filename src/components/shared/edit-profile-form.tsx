@@ -32,6 +32,9 @@ type Props = {
 export function EditProfileForm({ role, userId, userData, umkmData }: Props) {
   const [msg, setMsg] = useState('')
   const [offeringType, setOfferingType] = useState(umkmData?.offering_type ?? 'jasa')
+  const [serviceArea, setServiceArea] = useState(umkmData?.service_area ?? '')
+  const [priceMin, setPriceMin] = useState('')
+  const [priceMax, setPriceMax] = useState('')
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(userData.avatar_url ?? null)
   const [uploading, setUploading] = useState(false)
@@ -77,6 +80,10 @@ async function handleUserSubmit(formData: FormData) {
 
   async function handleUmkmSubmit(formData: FormData) {
     formData.set('offeringType', offeringType)
+    formData.set('serviceArea', serviceArea)
+    if (priceMin || priceMax) {
+      formData.set('basePriceRange', `Rp${Number(priceMin || 0).toLocaleString('id-ID')} - Rp${Number(priceMax || 0).toLocaleString('id-ID')}`)
+    }
 
     if (bannerFile) {
       const supabase = createClient()
@@ -154,8 +161,21 @@ async function handleUserSubmit(formData: FormData) {
               <Textarea id="description" name="description" defaultValue={umkmData?.description ?? ''} rows={3} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="serviceArea">Wilayah Layanan</Label>
-              <Input id="serviceArea" name="serviceArea" defaultValue={umkmData?.service_area ?? ''} />
+              <Label>Wilayah Layanan</Label>
+              <Select value={serviceArea} onValueChange={(v) => setServiceArea(v ?? '')}>
+                <SelectTrigger>
+                  <SelectValue>{(v: string | null) => v || 'Pilih wilayah'}</SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Solo">Solo</SelectItem>
+                  <SelectItem value="Sukoharjo">Sukoharjo</SelectItem>
+                  <SelectItem value="Karanganyar">Karanganyar</SelectItem>
+                  <SelectItem value="Boyolali">Boyolali</SelectItem>
+                  <SelectItem value="Klaten">Klaten</SelectItem>
+                  <SelectItem value="Sragen">Sragen</SelectItem>
+                  <SelectItem value="Wonogiri">Wonogiri</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label>Jenis Penawaran</Label>
@@ -173,12 +193,18 @@ async function handleUserSubmit(formData: FormData) {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="basePriceRange">Kisaran Harga Dasar</Label>
-              <Input id="basePriceRange" name="basePriceRange" placeholder="mis. Rp50.000 - Rp300.000" defaultValue={umkmData?.base_price_range ?? ''} />
+              <Label>Kisaran Harga Dasar</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <Input type="number" min="0" placeholder="Harga minimal" value={priceMin} onChange={(e) => setPriceMin(e.target.value)} />
+                <Input type="number" min="0" placeholder="Harga maksimal" value={priceMax} onChange={(e) => setPriceMax(e.target.value)} />
+              </div>
+              {umkmData?.base_price_range && !priceMin && !priceMax && (
+                <p className="text-xs text-muted-foreground">Saat ini: {umkmData.base_price_range}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="operationalHours">Jam Operasional</Label>
-              <Input id="operationalHours" name="operationalHours" placeholder="mis. 08.00 - 20.00" defaultValue={umkmData?.operational_hours ?? ''} />
+              <Input key={umkmData?.operational_hours ?? 'hours'} id="operationalHours" name="operationalHours" placeholder="mis. 08.00 - 20.00" defaultValue={umkmData?.operational_hours ?? ''} />
             </div>
             <Button type="submit">Simpan Profil Usaha</Button>
           </form>

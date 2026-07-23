@@ -4,14 +4,11 @@ import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { sendMessage } from '@/lib/actions/chat'
-import { createOrGetTransaction, createTransactionFromListing } from '@/lib/actions/transactions'
+import { createOrGetTransaction, createMultiItemTransaction } from '@/lib/actions/transactions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select'
-import { Handshake, CreditCard } from 'lucide-react'
-
+import { Checkbox } from '@/components/ui/checkbox'
+import { Handshake, CreditCard, Minus, Plus } from 'lucide-react'
 type Message = {
   id: string
   conversation_id: string
@@ -45,7 +42,7 @@ export function ChatRoom({
   const [text, setText] = useState('')
   const [dealError, setDealError] = useState('')
   const [pickerOpen, setPickerOpen] = useState(false)
-  const [selectedListingId, setSelectedListingId] = useState('')
+  const [selectedItems, setSelectedItems] = useState<Record<string, number>>({}) // listingId -> quantity
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -121,15 +118,41 @@ export function ChatRoom({
     if (result?.error) setDealError(result.error)
   }
 
+  function toggleItem(listingId: string) {
+    setSelectedItems((prev) => {
+      const next = { ...prev }
+      if (next[listingId]) {
+        delete next[listingId]
+      } else {
+        next[listingId] = 1
+      }
+      return next
+    })
+  }
+
+  function changeQuantity(listingId: string, delta: number) {
+    setSelectedItems((prev) => ({
+      ...prev,
+      [listingId]: Math.max(1, (prev[listingId] ?? 1) + delta),
+    }))
+  }
+
   async function handleConfirmDeal() {
-    if (!selectedListingId) {
-      setDealError('Pilih layanan dulu')
+    const listingIds = Object.keys(selectedItems)
+    if (listingIds.length === 0) {
+      setDealError('Pilih minimal 1 layanan')
       return
     }
+
+    const items = listingIds.map((id) => {
+      const listing = listings.find((l) => l.id === id)!
+      return { listingId: id, title: listing.title, price: listing.price ?? 0, quantity: selectedItems[id] }
+    })
+
     const formData = new FormData()
     formData.set('conversationId', conversationId)
-    formData.set('listingId', selectedListingId)
-    const result = await createTransactionFromListing(formData)
+    formData.set('items', JSON.stringify(items))
+    const result = await createMultiItemTransaction(formData)
     if (result?.error) setDealError(result.error)
   }
 
@@ -156,23 +179,40 @@ export function ChatRoom({
                 <Handshake className="mr-1.5 size-4" />Tandai Deal
               </Button>
             ) : showDirectDeal && pickerOpen ? (
-              <div className="flex w-full flex-wrap items-center gap-2">
-                <Select value={selectedListingId || null} onValueChange={(v) => setSelectedListingId(v ?? '')}>
-                  <SelectTrigger className="w-56">
-                    <SelectValue placeholder="Pilih layanan">
-                      {(value: string | null) => listings.find((l) => l.id === value)?.title ?? 'Pilih layanan'}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {listings.map((l) => (
-                      <SelectItem key={l.id} value={l.id}>
-                        {l.title}{l.price ? ` — Rp${Number(l.price).toLocaleString('id-ID')}` : ''}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button size="sm" onClick={handleConfirmDeal}>Konfirmasi Deal</Button>
-                <Button size="sm" variant="ghost" onClick={() => setPickerOpen(false)}>Batal</Button>
+              <div className="w-full space-y-2">
+                <div className="space-y-1.5 rounded-md border bg-background p-2">
+                  {listings.map((l) => {
+                    const isSelected = Boolean(selectedItems[l.id])
+                    return (
+                      <div key={l.id} className="flex items-center justify-between gap-2 py-1">
+                        <label className="flex flex-1 items-center gap-2 text-sm">
+                          <Checkbox checked={isSelected} onCheckedChange={() => toggleItem(l.id)} />
+                          <span>{l.title}{l.price ? ` — Rp${Number(l.price).toLocaleString('id-ID')}` : ''}</span>
+                        </label>
+                        {isSelected && (
+                          <div className="flex items-center gap-1.5">
+                            <Button type="button" size="icon" variant="outline" className="size-6" onClick={() => changeQuantity(l.id, -1)}>
+                              <Minus className="size-3" />
+                            </Button>
+                            <span className="w-4 text-center text-sm">{selectedItems[l.id]}</span>
+                            <Button type="button" size="icon" variant="outline" className="size-6" onClick={() => changeQuantity(l.id, 1)}>
+                              <Plus className="size-3" />
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+                {Object.keys(selectedItems).length > 0 && (
+                  <p className="text-sm font-medium">
+                    Total: Rp{listings.reduce((sum, l) => sum + (selectedItems[l.id] ? (l.price ?? 0) * selectedItems[l.id] : 0), 0).toLocaleString('id-ID')}
+                  </p>
+                )}
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={handleConfirmDeal}>Konfirmasi Deal</Button>
+                  <Button size="sm" variant="ghost" onClick={() => { setPickerOpen(false); setSelectedItems({}) }}>Batal</Button>
+                </div>
               </div>
             ) : null}
           </div>

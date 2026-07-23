@@ -26,7 +26,7 @@ export default async function UmkmDashboardPage() {
         <Link href="/umkm/trust-score">
           <Card className="hover:bg-muted/50">
             <CardHeader><CardTitle className="text-sm text-muted-foreground">Trust Score</CardTitle></CardHeader>
-            <CardContent><p className="text-2xl font-bold">{profile?.trust_score ?? 0}/100</p></CardContent>
+            <CardContent><p className="text-2xl font-bold">{Math.round(profile?.trust_score ?? 0)}/100</p></CardContent>
           </Card>
         </Link>
         <Card>

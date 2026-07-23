@@ -61,11 +61,28 @@ export async function calculateGrowthData(umkmId: string): Promise<GrowthData> {
     .eq('user_id', umkmId)
     .single()
 
+  const { data: myCategories } = await supabase
+    .from('umkm_categories')
+    .select('category_id')
+    .eq('umkm_id', umkmId)
+
+  const myCategoryIds = (myCategories ?? []).map((c) => c.category_id)
+
+  let umkmIdsInSameCategory: string[] = []
+  if (myCategoryIds.length > 0) {
+    const { data: sameCategory } = await supabase
+      .from('umkm_categories')
+      .select('umkm_id')
+      .in('category_id', myCategoryIds)
+    umkmIdsInSameCategory = [...new Set((sameCategory ?? []).map((c) => c.umkm_id))]
+  }
+
   const { data: regionListings } = await supabase
     .from('listings')
     .select('price, umkm_profiles!inner(service_area)')
     .eq('status', 'active')
     .eq('umkm_profiles.service_area', profile?.service_area ?? '')
+    .in('umkm_id', umkmIdsInSameCategory.length > 0 ? umkmIdsInSameCategory : [umkmId])
     .not('price', 'is', null)
 
   const avgPriceRegion = regionListings && regionListings.length > 0

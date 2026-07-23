@@ -22,6 +22,11 @@ export default async function CheckoutPage({ params }: { params: Promise<{ trans
     .eq('id', transactionId)
     .single()
 
+  const { data: items } = await supabase
+    .from('transaction_items')
+    .select('*')
+    .eq('transaction_id', transactionId)
+
   if (!transaction) notFound()
   if (transaction.user_id !== user.id) notFound()
 
@@ -37,6 +42,16 @@ export default async function CheckoutPage({ params }: { params: Promise<{ trans
         </CardHeader>
         <CardContent className="space-y-2">
           <p className="text-sm text-muted-foreground">UMKM: {transaction.umkm_profiles?.business_name}</p>
+          {items && items.length > 0 && (
+            <div className="space-y-1 border-t pt-2">
+              {items.map((item) => (
+                <div key={item.id} className="flex justify-between text-sm">
+                  <span>{item.title}{item.quantity > 1 ? ` x${item.quantity}` : ''}</span>
+                  <span>Rp{Number(item.subtotal ?? 0).toLocaleString('id-ID')}</span>
+                </div>
+              ))}
+            </div>
+          )}
           <p className="text-sm font-medium">
             Total: Rp{Number(transaction.total_amount ?? 0).toLocaleString('id-ID')}
           </p>

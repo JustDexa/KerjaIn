@@ -98,8 +98,7 @@ export default async function UmkmPublicProfilePage({ params }: { params: Promis
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Trust Score</p>
-                <p className="text-3xl font-bold">{profile.trust_score ?? 0}/100</p>
-              </div>
+<p className="text-3xl font-bold">{Math.round(profile.trust_score ?? 0)}/100</p>              </div>
               {(profile.trust_score ?? 0) === 0 && (
                 <p className="text-xs text-muted-foreground">Belum ada transaksi selesai</p>
               )}
