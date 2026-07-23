@@ -54,12 +54,31 @@ export function OpenJobsList({ initialJobs }: { initialJobs: OpenJob[] }) {
             filter: 'status=eq.open',
           },
           async (payload) => {
-            const newJob = payload.new as { id: string; description: string; location: string; is_urgent: boolean; category_id: string; user_id: string }
+            const newJob = payload.new as {
+              id: string
+              title: string | null
+              description: string
+              location: string
+              is_urgent: boolean
+              category_id: string
+              user_id: string
+            }
 
             const [{ data: category }, { data: poster }] = await Promise.all([
               supabase.from('categories').select('name').eq('id', newJob.category_id).maybeSingle(),
               supabase.from('users').select('full_name, avatar_url').eq('id', newJob.user_id).maybeSingle(),
             ])
+
+            const nextJob: OpenJob = {
+              id: newJob.id,
+              title: newJob.title,
+              description: newJob.description,
+              location: newJob.location,
+              is_urgent: newJob.is_urgent,
+              category_id: newJob.category_id,
+              categories: category,
+              users: poster,
+            }
 
             setJobs((prev) => {
               if (prev.some((j) => j.id === newJob.id)) return prev
