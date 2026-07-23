@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { OpenJobsList } from '@/components/shared/open-jobs-list'
 
 export default async function UmkmRequestsPage() {
   const supabase = await createClient()
@@ -39,20 +40,7 @@ export default async function UmkmRequestsPage() {
         </TabsList>
 
         <TabsContent value="open" className="mt-4 space-y-3">
-          {(!openJobs || openJobs.length === 0) && <p className="text-sm text-muted-foreground">Belum ada permintaan terbuka.</p>}
-          {openJobs?.map((job) => (
-            <Link key={job.id} href={`/job/${job.id}`}>
-              <Card className="hover:bg-muted/50">
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle className="text-base">{job.description.slice(0, 60)}</CardTitle>
-                  {job.is_urgent && <Badge variant="destructive">Urgent</Badge>}
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">{job.categories?.name} · {job.location}</p>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
+          <OpenJobsList initialJobs={openJobs ?? []} />
         </TabsContent>
 
         <TabsContent value="applied" className="mt-4 space-y-3">
